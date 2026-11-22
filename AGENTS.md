@@ -1,0 +1,62 @@
+# AGENTS.md
+
+Guidance for AI coding agents working in this repository.
+
+## Project
+
+Personal web app (PWA-capable) that pulls the owner's Garmin Connect data, shows charts,
+and offers an agentic assistant for training, fitness and health questions.
+Single user. Not a multi-tenant product.
+
+Current state: **planning / discovery only. No application code yet.**
+Read `docs/` before making decisions.
+
+## Key decisions (see `docs/decisions.md`)
+
+- **Stack direction:** Next.js (App Router, TypeScript). UI and API routes in one project.
+- **Garmin data:** official **Garmin Connect Developer Program – Personal API** (personal API key,
+  pull-only). Not the unofficial `garth` / `python-garminconnect` login scraping, unless the
+  official route proves insufficient.
+- **Agent layer:** undecided. Candidates: Vercel AI SDK, `@earendil-works/pi-agent-core`
+  (+ `pi-ai`), `@anthropic-ai/claude-agent-sdk`, and A2UI for rich generative UI.
+  The user wants standard protocols over custom glue.
+- **UI:** deferred. Start with key capabilities first.
+- **Platform:** iPhone use via PWA. Native iOS (SwiftUI) was considered and deprioritised.
+
+## Working rules
+
+- Do **not** read, print, copy or commit `.env` or any file containing the Garmin personal API key
+  or other secrets. Reference variables by name only.
+- Do **not** commit personal health exports (`~/Downloads/*.csv`) or any dump of real health data
+  into the repo. Use synthetic or anonymised fixtures for tests.
+- Garmin export CSVs are **Portuguese-localised** (headers like `Tempo`, `Peso`, `Braçada`).
+  Parsers must handle localisation and the decimal/unit formats (e.g. `81.2 kg`, `6h 45m`, `--` for missing).
+- Verify any Garmin endpoint, field name or auth header against a real response before relying on it.
+  Endpoint paths listed in `docs/garmin-api.md` came from the Swagger JS bundle and are **unverified**.
+- Health output is informational, not medical advice. The agent must cite the numbers it used and flag
+  concerning signals (e.g. elevated resting HR, low HRV trend) with a suggestion to see a clinician.
+- Prefer standard protocols and well-maintained libraries over custom abstractions.
+- Keep changes small and reviewable. Ask before adding a dependency with heavy footprint.
+
+## Verify before claiming
+
+- Library versions and maturity (check npm registry / repo, not memory).
+- Garmin API rate limits, history depth, and data scope (not yet confirmed).
+- A2UI: React renderer `@a2ui/react` is at `0.15.0` (pre-1.0). The spec page is labelled v1.0. Treat as not yet stable.
+
+## Memory
+
+Project memory is stored via `memory_store` (project `garminconnect`). Update existing entries rather than duplicating.
+
+## Commands
+
+No build/test commands yet. Add them here once the Next.js scaffold exists.
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
