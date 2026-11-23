@@ -8,7 +8,7 @@ Personal web app (PWA-capable) that pulls the owner's Garmin Connect data, shows
 and offers an agentic assistant for training, fitness and health questions.
 Single user. Not a multi-tenant product.
 
-Current state: **planning / discovery only. No application code yet.**
+Current state: **early development.** Next.js scaffold complete (GC-6: DB foundation with async SQLite + Drizzle + ULID).
 Read `docs/` before making decisions.
 
 ## Key decisions (see `docs/decisions.md`)
@@ -52,18 +52,43 @@ Project memory is stored via `memory_store` (project `garminconnect`). Update ex
 
 ```bash
 # Development
-npm run dev              # Start dev server (http://localhost:3000)
+npm run dev              # Start dev server (http://localhost:3344)
 npm run build            # Build for production
 npm start               # Run production build
 
 # Testing & Quality
 npm run typecheck       # Run TypeScript type checking (tsc --noEmit)
 npm run test            # Run tests in watch mode (Jest)
-npm run test:ci          # Run tests with coverage (CI mode)
+npm run test:ci         # Run tests with coverage (CI mode)
+npm run test:coverage   # Full coverage report
+npm run test:pre-commit # Fast test run (used by pre-commit hooks)
 npm run lint            # Run ESLint on src/
+npm run format          # Auto-fix formatting with Prettier
+npm run format:check    # Check formatting without changing files
+npm run verify          # Full suite: lint + typecheck + test:ci
 
-# Scripts
-scripts/setup-testing.sh # Install testing dependencies (Jest, @testing-library/react)
+# Database
+npm run db:generate     # Generate Drizzle migrations
+npm run db:migrate      # Apply migrations to the database
+```
+
+## Project Structure
+
+```
+src/
+├── app/              # Next.js app router
+├── db/               # Database layer (async SQLite + Drizzle)
+│  ├── schema.ts      # Table definitions (raw_json, sync_run, settings)
+│  ├── client.ts      # libsql/drizzle client factory
+│  ├── id.ts          # ULID monotonic ID generator
+│  ├── migrate.ts     # Migration runner
+│  ├── testing.ts     # In-memory test DB helper
+│  ├── repos/         # Typed repository layer
+│  └── __tests__/     # DB and repo tests
+drizzle/             # Migration files (generated)
+docs/                # Architecture, API docs, decisions, UI mockup
+fixtures/            # Gitignored: personal Garmin exports
+scripts/             # CI/quality scripts
 ```
 
 ### Design System
@@ -71,6 +96,19 @@ scripts/setup-testing.sh # Install testing dependencies (Jest, @testing-library/
 - Design tokens: `src/app/design-tokens.css` — dark, data-dense, mobile-first color palette and utilities
 - Global styles: `src/app/globals.css` — imports design tokens and Tailwind
 - Mobile viewport: 430px max-width, 900px max-height (enforced in CSS custom properties)
+
+### Database (GC-6)
+
+- **Driver:** `@libsql/client` (async SQLite; preserves Node.js event loop)
+- **ORM:** Drizzle (dialect-agnostic; migration path to Postgres)
+- **IDs:** ULID (26 chars, sortable by creation time)
+- **Tables:**
+  - `raw_json` — verbatim Garmin responses (source, kind, date, payload)
+  - `sync_run` — sync history (trigger, status, error)
+  - `settings` — typed key/value store (units, sync.hour, etc.)
+- **Test helper:** `createTestDb()` for in-memory migrations
+- **Repos:** Typed, one per table (rawJsonRepo, syncRunRepo, settingsRepo)
+- **Environment:** `DATABASE_URL` (default `file:./data/app.db`)
 
 ## This is NOT the Next.js you know
 
@@ -125,6 +163,39 @@ To bypass hooks (not recommended):
 ```bash
 git commit --no-verify   # Skips all hooks
 ```
+
+## Recent changes
+
+### GC-6: Database Foundation (async SQLite + Drizzle)
+
+**Added:**
+
+- `src/db/` module with schema, client factory, migration runner
+- Async `@libsql/client` driver (preserves event loop)
+- Drizzle ORM with SQLite schema (migration path to Postgres)
+- ULID monotonic IDs for all tables
+- Three base tables: raw_json, sync_run, settings
+- Typed repository layer (rawJsonRepo, syncRunRepo, settingsRepo)
+- In-memory test helper (`createTestDb()`)
+- Migration generation with `npm run db:generate`
+- 6 synthetic-data tests in `src/db/__tests__/repos.test.ts`
+
+**Configuration:**
+
+- Dev server fixed on port 3344 (`npm run dev`)
+- Drizzle config in `drizzle.config.ts`
+- Migrations stored in `drizzle/`
+- `/data/` gitignored (local SQLite database)
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
