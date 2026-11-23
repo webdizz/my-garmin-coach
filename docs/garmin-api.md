@@ -17,53 +17,71 @@ Source pages:
 - Data listed as included: activity data (JSON and FIT), health data (JSON), women's health data (JSON).
 - Starter/Enterprise access is a separate application for multi-user apps. Not needed here.
 
-## Endpoints (unverified)
+## Verified (2026-11-23, GC-2 spike)
 
-Paths taken from the Swagger page's JS bundle. Base URL, auth header format, parameters, response
-schemas and rate limits are **not yet verified**.
+Checked against live responses with the owner's key. Probe scripts: `scripts/probe-*.mjs`
+(print status and shape only; raw JSON goes to git-ignored `fixtures/`).
 
-| Area | Path |
-|---|---|
-| Sleep (daily) | `/sleep-service/sleep/dailySleep` |
-| Sleep summaries | `/sleep-service/sleep/dailySleepSummariesByDate` |
-| HRV (daily range) | `/hrv-service/hrv/daily/{fromDate}/{toDate}` |
-| HRV (single day) | `/hrv-service/hrv/{calendarDate}` |
-| Resting / daily heart rate | `/wellness-service/wellness/dailyHeartRate` |
-| Body battery | `/wellness-service/wellness/bodyBattery/reports/daily` |
-| Stress (daily range) | `/usersummary-service/stats/stress/daily/{startDate}/{endDate}` |
-| SpO2 acclimation | `/wellness-service/wellness/daily/spo2acclimation/{calendarDate}` |
-| Weight (range) | `/weight-service/weight/range/{startDate}/{endDate}` |
-| Weight (all) | `/weight-service/weight/all/{startDate}/{endDate}` |
-| Weight goal | `/goal-service/goal/user/effective/weightgoal/{startDate}/{endDate}` |
-| Fitness age | `/fitnessage-service/fitnessage/v2/{calendarDate}` |
-| Activity list / search | `/activitylist-service/activities/search/activities` |
-| Activity summary (range) | `/wellnessactivity-service/activity/summary/range/{fromDate}/{untilDate}` |
-| Activity detail | `/activity-service/activity/{activityId}` |
-| Workouts in activity | `/activity-service/activity/{activityId}/workouts` |
-| Activity file (FIT) | `/download-service/files/activity/{activityId}` |
-| Menstrual cycle (day / summary) | `/periodichealth-service/menstrualcycle/dayview/{calendarDate}`, `/periodichealth-service/menstrualcycle/summary/{calendarDate}` |
+### Auth
+- Base URL: `https://personal.connectapi.garmin.com` (`.cn` variant exists for China).
+- Token: `POST /personalapitoken-service/personal-api/personal-api-key/token` with
+  `Authorization: ApiKey <key>`. Response body is the **raw JWT string** (not JSON). TTL 24 h.
+- Data calls: `Authorization: Bearer <jwt>`.
+- JWT scopes: `CONNECT_READ`, `PERSONAL_API_FITNESS_READ`, `PERSONAL_API_NUTRITION_READ`,
+  `PERSONAL_API_USER_READ`, `PERSONAL_API_WELLNESS_READ`.
+
+### Rate limits and history
+- Rate limit: 60 sequential calls in a row to one endpoint, all 200. No 429, no `RateLimit`/`Retry-After`
+  headers. Limit is undocumented; sync gently (cache in SQLite, daily incremental pull).
+- History depth: about **1 year**. HRV returns 204 and sleep returns empty at 360 days, data at 330.
+  Activity list returned results for older ranges (not measured further, check before relying on it).
+- Range endpoints cap the span: HRV daily and VO2 range work at 90 days and return **400 at 400 days**.
+  Chunk backfills (e.g. 90-day windows).
+
+### Endpoints
+| Area | Call | Status | Notes |
+|---|---|---|---|
+| Sleep (day) | `GET /sleep-service/sleep/dailySleep?date=YYYY-MM-DD` | OK | `sleepTimeSeconds`, deep/light/rem/awake seconds, `sleepScores.overall`, `avgHeartRate`, `avgSleepStress`, respiration, `sleepNeed`. Empty fields when no data. No resting HR here. |
+| Sleep (range) | `GET /sleep-service/sleep/dailySleepSummariesByDate?startDate&endDate` | OK | Array, same shape as day. |
+| HRV (day) | `GET /hrv-service/hrv/{date}` | OK | `hrvSummary{weeklyAvg,lastNightAvg,lastNight5MinHigh,baseline,status}` plus ~83 `hrvReadings`. 204 when no data. |
+| HRV (range) | `GET /hrv-service/hrv/daily/{from}/{to}` | OK | `hrvSummaries[]`. Max span under 400 days. |
+| Resting HR | `GET /wellness-service/wellness/dailyHeartRate?date=` | OK | `restingHeartRate`, `lastSevenDaysAvgRestingHeartRate`, min/max, 2-min `heartRateValues`. |
+| VO2max | `GET /metrics-service/metrics/maxmet/daily/{from}/{to}` | OK | `[{generic:{calendarDate,vo2MaxValue,vo2MaxPreciseValue,sport}, cycling}]`. Not in the published Swagger list; found by probing. Only days with a change. |
+| Weight | `GET /weight-service/weight/range/{from}/{to}` | OK | `dailyWeightSummaries[].latestWeight{weight,bmi,...}`. `bodyFat`, `bodyWater`, `muscleMass`, `boneMass` are **null** for `sourceType: MANUAL` entries. Unknown for scale readings. |
+| Max HR / zones | `GET /biometric-service/heartRateZones/v2` | OK | `maxHeartRateUsed`, `restingHeartRateUsed`, `lactateThresholdHeartRateUsed`, `zone1Floor`..`zone5Floor`. |
+| Activities | `GET /activitylist-service/activities/search/activities?limit&start&startDate&endDate` | OK | Rich summary: `averageHR`, `maxHR`, `aerobicTrainingEffect`, `anaerobicTrainingEffect`, `activityTrainingLoad`, `hrTimeInZone_*`, swim stroke fields. |
+| Activity detail | `GET /activity-service/activity/{id}` | OK | `summaryDTO`, `metadataDTO`. |
+| Activity FIT | `GET /download-service/files/activity/{id}` | OK | Returns a **zip** (`application/x-zip-compressed`) containing the FIT. |
+| Body battery | `GET /wellness-service/wellness/bodyBattery/reports/daily?startDate&endDate` | OK | Daily array with `charged`, `drained`, value series. |
+| Stress | `GET /usersummary-service/stats/stress/daily/{from}/{to}` | OK | |
+| Daily summary | `GET /usersummary-service/usersummary/daily?calendarDate=` | OK | Steps, calories, active seconds. |
+| Steps (range) | `GET /usersummary-service/stats/steps/daily/{from}/{to}` | OK | |
+| SpO2 | `GET /wellness-service/wellness/daily/spo2acclimation/{date}` | 200 | Content not inspected. |
+| Fitness age | `GET /fitnessage-service/fitnessage/v2/{date}` | OK | `fitnessAge`, `achievableFitnessAge`, components. |
+| User settings | `GET /userprofile-service/userprofile/settings` | OK | Locale, units. Contains profile data, do not log. |
+| Training status | `/metrics-service/metrics/trainingstatus/daily/{date}` | **404** | Guessed path, not found. |
+| Training readiness | `/metrics-service/metrics/trainingreadiness/{date}` | **404** | Guessed path, not found. |
+| Race predictions | `/metrics-service/metrics/racepredictions/latest` | **404** | Guessed path. |
+
+## Gaps
+- **Training status** (productive/maintaining label, acute load, load balance) and **training readiness**:
+  no working endpoint found. Partial substitutes: per-activity `activityTrainingLoad` and training effect
+  from the activity list. The Swagger bundle lists no such endpoint, so assume absent.
+- **Body composition** beyond weight/BMI: null for manual entries. Needs a Garmin scale reading to confirm.
+- History is limited to about 1 year. Start syncing now and keep our own copy.
+- Rate limits undocumented.
 
 ## Mapping to my existing exports
 
-| Export | Equivalent API area | Confidence |
+| Export | Equivalent API area | Result |
 |---|---|---|
-| `A dormir.csv` (sleep score, stages, resting HR, HRV, stress, body battery) | sleep, HRV, heart rate, stress, body battery | Likely covered; verify fields |
-| `Peso.csv` (weight, BMI, body fat, muscle, bone, water) | weight | Weight/BMI likely; body composition fields **unconfirmed** |
-| `activity_*.csv` (pool swim, per-length splits) | activity detail / FIT download | Covered via FIT file; need to parse FIT for lengths |
+| `A dormir.csv` (sleep score, stages, resting HR, HRV, stress, body battery) | sleep, HRV, heart rate, stress, body battery | Covered. Resting HR comes from `dailyHeartRate`, not sleep. |
+| `Peso.csv` (weight, BMI, body fat, muscle, bone, water) | weight | Weight/BMI covered. Body composition unconfirmed. |
+| `activity_*.csv` (pool swim, per-length splits) | activity detail / FIT download | FIT zip works. Per-length splits need FIT parsing. |
 
 ## Open questions
-
-- Exact base URL and auth header format.
-- Response schemas for each endpoint (field names, units, nullability).
-- History depth available per endpoint.
-- Rate limits and recommended sync cadence.
-- Whether body composition values (body fat, muscle, water) are returned for scale-only readings.
-- Whether Garmin's CSV-only metrics (e.g. "Momentos inquietos", "Battery" end-of-day value) exist in the API.
-- FIT SDK needed for parsing swim/activity files (not yet chosen).
-
-## Verification plan
-
-1. Create key, store in `.env` as a named variable (never print it).
-2. Make one call per area with a short date range; save the raw JSON to a git-ignored `fixtures/` dir.
-3. Diff raw fields against the matching CSV row for the same day.
-4. Record base URL, auth flow and rate-limit headers here.
+- Exact rate limit and behaviour on 429.
+- Whether any hidden endpoint exposes training status or readiness.
+- Body composition fields for real scale readings.
+- Activity history depth beyond 1 year.
+- FIT SDK needed to parse swim and activity files.
