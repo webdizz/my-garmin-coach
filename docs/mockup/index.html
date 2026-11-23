@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Garmin Coach – mockup (synthetic data)</title>
+<style>
+:root{
+  --bg:#0a0d10;--s1:#11161b;--s2:#181f26;--line:#232d37;
+  --tx:#e8eef3;--mu:#8b9aa8;--dim:#5a6875;
+  --ok:#5eead4;--warn:#fbbf24;--bad:#fb7185;--acc:#c4f24a;--blue:#7cb8ff;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  --sans:-apple-system,"SF Pro Text",Inter,system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#05070a;color:var(--tx);font:14px/1.4 var(--sans);display:flex;justify-content:center;min-height:100vh}
+.app{width:100%;max-width:430px;height:100vh;max-height:900px;margin:auto;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden}
+@media(min-width:500px){.app{border:1px solid var(--line);border-radius:36px;height:880px}}
+main{flex:1;overflow-y:auto;padding:16px 16px 24px;scrollbar-width:none}
+main::-webkit-scrollbar{display:none}
+.screen{display:none}.screen.on{display:block}
+h1{font-size:22px;font-weight:650;letter-spacing:-.02em}
+h2{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--mu);margin:20px 0 8px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.sub{color:var(--mu);font-size:12px}
+.sync{font:11px var(--mono);color:var(--mu);display:flex;align-items:center;gap:6px;margin-top:4px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--ok);display:inline-block}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.hero{background:linear-gradient(160deg,#142018,var(--s1) 60%);border-color:#27402c}
+.big{font:600 44px/1 var(--mono);letter-spacing:-.04em}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.between{display:flex;justify-content:space-between;align-items:center}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.m{background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:12px;cursor:pointer}
+.m .l{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em}
+.m .v{font:600 24px var(--mono);margin:4px 0 2px;letter-spacing:-.03em}
+.m .v small{font-size:12px;color:var(--mu);font-weight:400}
+.d{font:11px var(--mono)}
+.up{color:var(--ok)}.dn{color:var(--bad)}.fl{color:var(--mu)}.wn{color:var(--warn)}
+.tag{display:inline-block;font:600 10px var(--mono);padding:2px 7px;border-radius:99px;border:1px solid var(--line);color:var(--mu);letter-spacing:.04em}
+.tag.ok{color:var(--ok);border-color:#1f4a44}.tag.wn{color:var(--warn);border-color:#4d3e12}.tag.ac{color:var(--acc);border-color:#44571a}
+.btn{border:1px solid var(--line);background:var(--s2);color:var(--tx);border-radius:10px;padding:9px 12px;font:600 13px var(--sans);cursor:pointer;text-align:center}
+.btn.p{background:var(--acc);color:#10160a;border-color:var(--acc)}
+.why{border-left:2px solid var(--line);padding-left:10px;margin-top:10px;color:var(--mu);font-size:12px}
+.why b{color:var(--tx);font:500 12px var(--mono)}
+.chip{display:inline-block;font:11px var(--mono);background:var(--s2);border:1px solid var(--line);color:var(--blue);padding:2px 7px;border-radius:6px;margin:2px 2px 0 0}
+nav{display:flex;border-top:1px solid var(--line);background:#0c1014;padding:6px 6px 22px}
+nav button{flex:1;background:none;border:0;color:var(--dim);font:600 10px var(--sans);letter-spacing:.04em;padding:6px 0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--acc)}
+.seg{display:flex;background:var(--s1);border:1px solid var(--line);border-radius:10px;padding:2px;margin-bottom:12px}
+.seg button{flex:1;background:none;border:0;color:var(--mu);padding:6px;border-radius:8px;font:600 12px var(--mono);cursor:pointer}
+.seg button.on{background:var(--s2);color:var(--tx)}
+svg.ch{width:100%;height:auto;display:block}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px}
+.day{background:var(--s1);border:1px solid var(--line);border-radius:10px;padding:6px 0;text-align:center;font:11px var(--mono);color:var(--mu);cursor:pointer}
+.day b{display:block;font-size:15px;color:var(--tx);margin:2px 0}
+.day.on{border-color:var(--acc)}.day i{display:block;width:5px;height:5px;border-radius:50%;margin:4px auto 0;background:var(--line)}
+.day i.s{background:var(--acc)}.day i.r{background:var(--blue)}
+.slot{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.slot:last-child{border:0}
+.slot .t{font:12px var(--mono);color:var(--mu);width:44px;padding-top:2px}
+.slot .b{flex:1}
+.act{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.act .ic{width:36px;height:36px;border-radius:10px;background:var(--s2);display:grid;place-items:center;font-size:16px}
+.act .n{flex:1}.act .n div:first-child{font-weight:600}
+.msg{max-width:88%;padding:10px 12px;border-radius:14px;margin-bottom:10px;font-size:13.5px}
+.msg.u{background:var(--acc);color:#10160a;margin-left:auto;border-bottom-right-radius:4px}
+.msg.a{background:var(--s1);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.a .disc{font-size:11px;color:var(--dim);margin-top:8px}
+.prompts{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
+.prompts button{white-space:nowrap;background:var(--s1);border:1px solid var(--line);color:var(--mu);border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer}
+.input{display:flex;gap:8px;margin-top:6px}
+.input input{flex:1;background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:11px 12px;color:var(--tx);font:14px var(--sans);outline:none}
+.list .it{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.list .it:last-child{border:0}.list .it span:last-child{color:var(--mu);font-family:var(--mono);font-size:12px}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{border:1px solid var(--line);background:var(--s2);color:var(--mu);border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer}
+.pill.on{border-color:var(--acc);color:var(--acc)}
+.sheet{position:absolute;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;z-index:9}
+.sheet.on{display:flex}
+.sheet>div{background:var(--bg);border:1px solid var(--line);border-radius:22px 22px 0 0;width:100%;max-height:85%;overflow-y:auto;padding:16px}
+.grab{width:36px;height:4px;background:var(--line);border-radius:4px;margin:0 auto 14px}
+.note{font-size:11px;color:var(--dim);text-align:center;margin-top:14px}
+
+.lock{position:absolute;inset:0;z-index:20;background:radial-gradient(120% 60% at 50% 0%,#15201a,var(--bg) 60%);display:none;flex-direction:column;justify-content:center;padding:32px 28px}
+.lock.on{display:flex}
+.mark{width:56px;height:56px;border-radius:16px;background:var(--acc);display:grid;place-items:center;margin-bottom:20px}
+.mark svg{width:30px;height:30px;stroke:#10160a;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.lock h1{font-size:28px}
+.lock .btn{padding:14px;font-size:15px;margin-top:10px}
+.lock input{width:100%;background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:13px;color:var(--tx);font:15px var(--sans);outline:none;margin-top:10px}
+.lock .link{color:var(--mu);font-size:13px;text-align:center;margin-top:16px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.lock .st{font:11px var(--mono);color:var(--mu);margin-top:28px;display:flex;flex-direction:column;gap:6px}
+.lock .err{color:var(--bad);font-size:13px;margin-top:10px;display:none}
+.lock .banner{border:1px solid #4d3e12;background:#1b1707;color:var(--warn);border-radius:12px;padding:10px 12px;font-size:12px;margin-top:18px;display:none}
+.lock .banner.bad{border-color:#5a1f2a;background:#1d0b10;color:var(--bad)}
+.demo{position:absolute;bottom:14px;left:0;right:0;text-align:center;font:10px var(--mono);color:var(--dim)}
+.demo a{color:var(--mu);margin:0 6px;cursor:pointer;text-decoration:underline}
+.meter{height:5px;background:var(--s2);border-radius:5px;overflow:hidden;margin:8px 0}
+.meter i{display:block;height:100%;background:var(--acc);border-radius:5px}
+.wk{padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.wk:last-child{border:0}
+.wk.cur b{color:var(--acc)}
+.rev{border:1px dashed #44571a;background:#10160a;border-radius:14px;padding:12px;margin-bottom:12px;font-size:12.5px}
+.rev b{color:var(--acc)}
+.fact{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
+.fact:last-child{border:0}.fact span:last-child{color:var(--dim);font:11px var(--mono)}
+
+.pane{display:none}.pane.on{display:block}
+.att{display:none;align-items:center;gap:6px;margin-top:8px;font:11px var(--mono);color:var(--acc)}
+.att.on{display:flex}.att span{border:1px solid #44571a;border-radius:99px;padding:3px 9px}
+.att a{color:var(--mu);cursor:pointer;text-decoration:underline}
+.opt{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;cursor:pointer;background:var(--s1)}
+.opt b{display:block;font-size:14px}.opt .d{color:var(--mu)}
+.hit{padding:12px 0;border-bottom:1px solid var(--line)}.hit:last-child{border:0}
+.hit mark{background:#44571a;color:var(--tx);border-radius:3px;padding:0 2px}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="lock on" id="lock">
+  <div class="mark"><svg viewBox="0 0 24 24"><path d="M3 13h4l3-8 4 14 3-6h4"/></svg></div>
+  <h1>Garmin Coach</h1>
+  <div class="sub" style="margin-top:4px">Private. One user.</div>
+  <div class="banner" id="lk-banner"></div>
+  <div class="btn p" id="lk-pass" onclick="unlock()">Unlock with Face ID</div>
+  <div id="lk-pw" style="display:none">
+    <input type="password" placeholder="Password" aria-label="Password">
+    <div class="btn p" onclick="unlock()">Unlock</div>
+  </div>
+  <div class="err" id="lk-err">Face ID did not match. Try again or use your password.</div>
+  <div class="link" id="lk-toggle" onclick="togglePw()">Use password instead</div>
+  <div class="st"><span><span class="dot"></span> Garmin key valid · 71 d</span><span>Last sync 06:42 · data stays on your server</span></div>
+  <div class="demo">mockup states: <a onclick="lockState('ok')">default</a><a onclick="lockState('fail')">failed</a><a onclick="lockState('soon')">key 12 d</a><a onclick="lockState('exp')">key expired</a></div>
+</div>
+<main>
+
+<!-- TODAY -->
+<section class="screen on" id="today">
+  <div class="top">
+    <div><div class="sub">Thursday 21 May</div><h1>Good morning</h1></div>
+    <span class="tag ok">SYNCED</span>
+  </div>
+  <div class="sync"><span class="dot"></span>Pulled 06:42 · next pull 12:00 · key valid 71 d</div>
+
+  <h2>Today's call</h2>
+  <div class="card hero">
+    <div class="between">
+      <div><div class="big">72</div><div class="sub" style="margin-top:6px">Readiness · <span class="up">good to train</span></div></div>
+      <svg width="84" height="84" viewBox="0 0 84 84"><circle cx="42" cy="42" r="34" fill="none" stroke="#1d2a22" stroke-width="8"/><circle cx="42" cy="42" r="34" fill="none" stroke="#c4f24a" stroke-width="8" stroke-linecap="round" stroke-dasharray="154 214" transform="rotate(-90 42 42)"/></svg>
+    </div>
+    <div style="margin-top:14px;font-size:15px;font-weight:600">Easy aerobic run, 45 min, Zone 2</div>
+    <div class="sub">18:00 slot · 14 °C · dry · wind 9 km/h</div>
+    <div class="why">Why: <b>HRV 48 ms</b> is 6% under your 7-day baseline (<b>51 ms</b>), and <b>sleep 7h12</b> is slightly short. Hard work waits until HRV recovers.</div>
+    <div class="row" style="margin-top:12px">
+      <div class="btn p">Accept</div><div class="btn" onclick="go('ask')">Ask why</div><div class="btn" onclick="go('plan')">Move</div>
+    </div>
+  </div>
+
+  <h2>Overnight</h2>
+  <div class="grid">
+    <div class="m" onclick="openMetric('hrv')"><div class="l">HRV</div><div class="v">48<small> ms</small></div><div class="d dn">▼ 3 vs baseline</div></div>
+    <div class="m" onclick="openMetric('sleep')"><div class="l">Sleep</div><div class="v">7h12</div><div class="d fl">score 81 · deep 1h24</div></div>
+    <div class="m" onclick="openMetric('rhr')"><div class="l">Resting HR</div><div class="v">54<small> bpm</small></div><div class="d wn">▲ 2 vs 7d</div></div>
+    <div class="m" onclick="openMetric('vo2')"><div class="l">VO₂max</div><div class="v">52<small> ml/kg/min</small></div><div class="d up">▲ 1 in 30 d</div></div>
+  </div>
+
+  <h2>Signals</h2>
+  <div class="card">
+    <div class="between"><b>Resting HR trending up</b><span class="tag wn">WATCH</span></div>
+    <div class="sub" style="margin-top:4px">52 → 54 bpm over 5 days while HRV fell. Often fatigue or poor sleep. If it continues past a week or you feel unwell, see a clinician. Informational, not medical advice.</div>
+  </div>
+  <div class="card">
+    <div class="between"><b>Rain Saturday morning</b><span class="tag ac">PLAN</span></div>
+    <div class="sub" style="margin-top:4px">Long run on Sat 08:00 has 80% rain. Sun 08:00 is dry. Suggest swapping.</div>
+    <div class="row" style="margin-top:10px"><div class="btn" onclick="go('plan')">Review swap</div></div>
+  </div>
+</section>
+
+<!-- PLAN -->
+<section class="screen" id="plan">
+  <div class="top"><div><div class="sub">Base build · week 3 of 8</div><h1>Plan</h1></div><span class="tag">HALF MARATHON 12 OCT</span></div>
+  <div class="days" id="days"></div>
+
+  <div class="card" style="border-color:#44571a">
+    <div class="between"><b>Suggested change</b><span class="tag ac">WEATHER</span></div>
+    <div class="sub" style="margin:4px 0 10px">Swap Sat long run (80% rain) with Sun rest. Both days are in your preferred slots.</div>
+    <div class="row"><div class="btn p">Apply</div><div class="btn">Keep</div></div>
+  </div>
+
+  <h2 id="dayLabel">Thursday</h2>
+  <div class="card" id="dayCard"></div>
+
+  <h2>Week load</h2>
+  <div class="card">
+    <div class="between"><span class="sub">Planned</span><span class="d">212 min · 4 sessions</span></div>
+    <svg class="ch" id="weekBars" viewBox="0 0 360 90"></svg>
+    <div class="sub">Easy 80% · hard 20%. Matches the 80/20 target in your profile.</div>
+  </div>
+</section>
+
+<!-- TRENDS -->
+<section class="screen" id="trends">
+  <div class="top"><div><div class="sub">Computed from synced data</div><h1>Trends</h1></div></div>
+  <div class="seg" id="range"><button>7D</button><button class="on">30D</button><button>90D</button><button>1Y</button></div>
+
+  <div class="card"><div class="between"><b>HRV</b><span class="d dn">48 ms · ▼ 6% vs baseline</span></div><svg class="ch" id="c-hrv" viewBox="0 0 360 120"></svg><div class="sub">Shaded band = your normal range (45–58 ms)</div></div>
+  <div class="card"><div class="between"><b>VO₂max</b><span class="d up">52 · ▲ 1.0</span></div><svg class="ch" id="c-vo2" viewBox="0 0 360 120"></svg></div>
+  <div class="card"><div class="between"><b>Training load</b><span class="d fl">ratio 1.12 · productive</span></div><svg class="ch" id="c-load" viewBox="0 0 360 120"></svg><div class="sub"><span style="color:var(--acc)">■</span> acute 7 d &nbsp;<span style="color:var(--mu)">━</span> chronic 28 d</div></div>
+  <div class="card"><div class="between"><b>Resting HR</b><span class="d wn">54 bpm · ▲ 2</span></div><svg class="ch" id="c-rhr" viewBox="0 0 360 120"></svg></div>
+
+  <h2>Activities</h2>
+  <div class="card" style="padding:0 14px" id="acts"></div>
+</section>
+
+<!-- ASK -->
+<section class="screen" id="ask">
+  <div class="top">
+    <div><div class="sub">Plan week 3 of 8</div><h1>Coach</h1></div>
+    <div class="btn" onclick="openContext()">Context ›</div>
+  </div>
+  <div class="seg" id="cseg"><button class="on" data-p="cur">This week</button><button data-p="prev">Last week</button><button data-p="all">Weeks</button><button data-p="find">Search</button></div>
+  <div class="pane on" id="p-cur">
+
+  <div class="card">
+    <div class="between"><span class="sub">Coach is reading</span><span class="d fl">~3.4k tokens ›</span></div>
+    <div class="meter"><i style="width:34%"></i></div>
+    <div><span class="chip">plan wk 3</span><span class="chip">last 14 d metrics</span><span class="chip">your profile</span><span class="chip">7 memory facts</span><span class="chip">wk 2 summary</span></div>
+  </div>
+
+  <div class="rev"><b>Week 2 review</b> · generated Mon 07:00<br>Load 412, up 9%. Two hard sessions done, long run 14 km. HRV dipped midweek, recovered Sunday. Calf niggle noted. Week 3 keeps volume flat.</div>
+
+  <div class="msg u">Why an easy run today? I felt fine yesterday.</div>
+  <div class="msg a">Your numbers say recovery is a bit behind, even if you feel fine:
+    <div style="margin-top:6px"><span class="chip">HRV 48 ms</span><span class="chip">baseline 51 ms</span><span class="chip">RHR 54 bpm</span><span class="chip">sleep 7h12</span><span class="chip">load ratio 1.12</span></div>
+    <p style="margin-top:8px">HRV is below baseline for 3 days and resting HR is up 2 bpm. Load ratio 1.12 is fine, so I kept the session but made it Zone 2. Quality work moves to Saturday if HRV returns above 50 ms.</p>
+    <div class="disc">Informational, not medical advice. Persistent changes: see a clinician.</div>
+  </div>
+  <div class="msg u">Can I move the long run to Sunday and add a swim Friday?</div>
+  <div class="msg a">Yes. Sunday 08:00 is dry (12 °C) and a preferred slot. Friday 07:00 pool fits your slots. That puts 3 sessions in 4 days, so keep Friday's swim under 30 min easy.
+    <div class="row" style="margin-top:10px"><div class="btn p">Apply to plan</div><div class="btn">Not now</div></div>
+  </div>
+
+  <div class="sub" style="text-align:center;margin:4px 0 10px;font-family:var(--mono);font-size:11px">6 of 30 messages · at 30 I condense this week</div>
+  <div class="prompts"><button>Explain today's session</button><button>Am I overreaching?</button><button>Adjust for sore calf</button><button>Plan next week</button></div>
+  <div class="att" id="att"><span id="attTxt"></span><a onclick="attach(null)">remove</a></div>
+  <div class="input"><div class="btn" onclick="openAttach()" aria-label="Attach past week">＋</div><input placeholder="Ask your coach…" aria-label="Message"><div class="btn p">Send</div></div>
+  </div>
+
+  <div class="pane" id="p-prev">
+    <div class="between" style="margin-bottom:10px"><b>Week 2 · 11–17 May</b><span class="tag">READ ONLY</span></div>
+    <div class="rev"><b>Review</b> · load 412 (+9%), two hard sessions, long run 14 km. HRV dipped midweek, recovered Sunday. Calf niggle noted.</div>
+    <div class="grid" style="margin-bottom:10px">
+      <div class="m"><div class="l">Sessions</div><div class="v">4<small> / 4</small></div></div>
+      <div class="m"><div class="l">Avg HRV</div><div class="v">49<small> ms</small></div></div>
+    </div>
+    <div class="msg u">Is the calf worth worrying about?</div>
+    <div class="msg a">Mild and one-sided, so keep it under watch. I cut Wednesday's intervals to 5 reps. If it lasts past a week, see a physio.</div>
+    <div class="sub" style="text-align:center;margin:6px 0 12px;font:11px var(--mono)">18 messages · full thread ≈ 2.1k tokens</div>
+    <div class="btn p" onclick="attach('s');cseg('cur')">Continue in this week with summary</div>
+    <div class="btn" style="margin-top:8px" onclick="attach('f');cseg('cur')">Continue with full thread</div>
+  </div>
+
+  <div class="pane" id="p-all">
+    <div class="sub" style="margin-bottom:8px">One thread per plan week. Older weeks collapse to a short summary the coach carries forward.</div>
+    <div class="card" style="padding:0 14px" id="wkList"></div>
+    <div class="btn" onclick="openMemory()">Coach memory · 7 facts</div>
+  </div>
+
+  <div class="pane" id="p-find">
+    <div class="input" style="margin:0 0 12px"><input value="calf" aria-label="Search chats"></div>
+    <div class="card" style="padding:0 14px">
+      <div class="hit"><div class="between"><b>Week 2</b><span class="d fl">13 May</span></div><div class="sub">Is the <mark>calf</mark> worth worrying about? Mild and one-sided…</div></div>
+      <div class="hit"><div class="between"><b>Week 1</b><span class="d fl">8 May</span></div><div class="sub">Tight <mark>calf</mark> after the hill repeats. Swapped to flat.</div></div>
+      <div class="hit"><div class="between"><b>Week 3</b><span class="d fl">20 May</span></div><div class="sub">Adjust for sore <mark>calf</mark>: Zone 2 only until Saturday.</div></div>
+    </div>
+    <div class="note">Search runs on your server. Results cost no tokens until you attach one.</div>
+  </div>
+</section>
+
+<!-- PROFILE -->
+<section class="screen" id="you">
+  <div class="top"><div><div class="sub">What the coach knows about you</div><h1>You</h1></div></div>
+
+  <h2>Current state (you tell me)</h2>
+  <div class="card">
+    <div class="sub" style="margin-bottom:8px">Feeling today</div>
+    <div class="pills" id="feel"><span class="pill">Rough</span><span class="pill">Tired</span><span class="pill on">OK</span><span class="pill">Good</span><span class="pill">Great</span></div>
+    <div class="sub" style="margin:14px 0 8px">Active niggles or illness</div>
+    <div class="pills"><span class="pill on">Left calf, mild</span><span class="pill">+ Add</span></div>
+    <div class="sub" style="margin:14px 0 8px">Goal</div>
+    <div class="pills"><span class="pill on">Half marathon · 12 Oct · sub 1:45</span></div>
+  </div>
+
+  <h2>Pulled from Garmin automatically</h2>
+  <div class="card list">
+    <div class="it"><span>Sleep, HRV, resting HR</span><span>daily</span></div>
+    <div class="it"><span>Activities</span><span>after each</span></div>
+    <div class="it"><span>Weight, body composition</span><span>on change</span></div>
+    <div class="it"><span>VO₂max, training status</span><span>daily</span></div>
+    <div class="it"><span>Max HR, zones, age, height</span><span>weekly</span></div>
+  </div>
+
+  <h2>Training slots</h2>
+  <div class="card list">
+    <div class="it"><span>Mon · Wed · Thu</span><span>18:00–19:30</span></div>
+    <div class="it"><span>Sat · Sun</span><span>07:30–10:00</span></div>
+    <div class="it"><span>Fri</span><span>07:00 pool</span></div>
+    <div class="it"><span>Weather limits</span><span>no rain · 3–28 °C</span></div>
+  </div>
+
+  <h2>Background schedule</h2>
+  <div class="card list">
+    <div class="it"><span>Pull Garmin data</span><span>06:30 · 12:00 · 21:00</span></div>
+    <div class="it"><span>Morning briefing ready</span><span>07:00</span></div>
+    <div class="it"><span>Re-check weather vs plan</span><span>every 6 h</span></div>
+    <div class="it"><span>Notify me</span><span>plan changes only</span></div>
+  </div>
+  <div class="card list">
+    <div class="it"><span>Garmin API key</span><span>expires in 71 d</span></div>
+  </div>
+  <h2>Security</h2>
+  <div class="card list">
+    <div class="it"><span>Unlock</span><span>Face ID + password</span></div>
+    <div class="it"><span>Auto-lock</span><span>after 5 min</span></div>
+  </div>
+  <div class="btn" onclick="lockState('ok');document.getElementById('lock').classList.add('on')">Lock now</div>
+  <div class="note">Mockup · synthetic data · not medical advice</div>
+</section>
+
+</main>
+
+<nav id="nav"></nav>
+
+<div class="sheet" id="sheet" onclick="if(event.target===this)this.classList.remove('on')"><div id="sheetBody"></div></div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const setHTML=(el,h)=>el.replaceChildren(...new DOMParser().parseFromString('<body>'+h,'text/html').body.childNodes);
+const setSVG=(el,g)=>el.replaceChildren(...new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg">'+g+'</svg>','image/svg+xml').documentElement.childNodes);
+const icons={
+ today:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>',
+ plan:'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+ trends:'<path d="M3 17l5-6 4 3 8-9"/><path d="M15 5h5v5"/>',
+ ask:'<path d="M4 5h16v11H9l-5 4z"/>',
+ you:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>'};
+const labels={today:'Today',plan:'Plan',trends:'Trends',ask:'Coach',you:'You'};
+setHTML($('#nav'),Object.keys(icons).map(k=>`<button data-t="${k}" class="${k==='today'?'on':''}" onclick="go('${k}')"><svg viewBox="0 0 24 24">${icons[k]}</svg>${labels[k]}</button>`).join(''));
+function go(t){document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('on',e.id===t));
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));$('main').scrollTop=0}
+
+// deterministic synthetic series
+function series(n,base,amp,drift,seed){let a=[],s=seed;for(let i=0;i<n;i++){s=(s*9301+49297)%233280;a.push(base+drift*i/n+(s/233280-.5)*amp)}return a}
+function line(id,data,o={}){
+ const W=360,H=120,p=6,min=o.min??Math.min(...data),max=o.max??Math.max(...data);
+ const x=i=>p+i*(W-2*p)/(data.length-1),y=v=>H-p-(v-min)/(max-min)*(H-2*p);
+ let g='';
+ for(let k=0;k<4;k++){const yy=p+k*(H-2*p)/3;g+=`<line x1="0" x2="${W}" y1="${yy}" y2="${yy}" stroke="#1b232b"/>`}
+ if(o.band)g+=`<rect x="0" width="${W}" y="${y(o.band[1])}" height="${y(o.band[0])-y(o.band[1])}" fill="#5eead4" opacity=".08"/>`;
+ const d=data.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join(' ');
+ const c=o.color||'#c4f24a';
+ g+=`<path d="${d} L${x(data.length-1)} ${H} L${x(0)} ${H}Z" fill="${c}" opacity=".07"/><path d="${d}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round"/>`;
+ g+=`<circle cx="${x(data.length-1)}" cy="${y(data.at(-1))}" r="4" fill="${c}"/>`;
+ setSVG($(id),g)}
+function drawTrends(n){
+ line('#c-hrv',series(n,52,12,-4,3),{band:[45,58],min:35,max:68,color:'#5eead4'});
+ line('#c-vo2',series(n,51,.8,1.1,7),{color:'#c4f24a'});
+ line('#c-rhr',series(n,52,4,2,11),{color:'#fbbf24',min:46,max:60});
+ const ac=series(n,60,30,12,5),ch=series(n,55,6,4,9),W=360,H=120,p=6,max=100,x=i=>p+i*(W-2*p)/(n-1),y=v=>H-p-v/max*(H-2*p);
+ let s=ac.map((v,i)=>`<rect x="${x(i)-(W/n)*.35}" y="${y(v)}" width="${(W/n)*.7}" height="${H-p-y(v)}" fill="#c4f24a" opacity=".55" rx="1"/>`).join('');
+ s+=`<path d="${ch.map((v,i)=>(i?'L':'M')+x(i)+' '+y(v)).join(' ')}" fill="none" stroke="#8b9aa8" stroke-width="2"/>`;
+ setSVG($('#c-load'),s)}
+const rng={0:7,1:30,2:90,3:180};
+document.querySelectorAll('#range button').forEach((b,i)=>b.onclick=()=>{document.querySelectorAll('#range button').forEach(x=>x.classList.remove('on'));b.classList.add('on');drawTrends(rng[i])});
+drawTrends(30);
+
+// activities
+const acts=[['🏃','Easy run','Tue · 8.2 km · 5:48/km','avg 141 bpm · load 62'],['🏊','Pool swim','Mon · 1.2 km · 2:05/100m','avg 128 bpm · load 38'],['🏃','Tempo intervals','Sun · 10.4 km · 5:05/km','avg 164 bpm · load 118'],['🚴','Ride','Sat · 32 km · 24.1 km/h','avg 136 bpm · load 74']];
+setHTML($('#acts'),acts.map((a,i)=>`<div class="act" onclick="openAct(${i})"><div class="ic">${a[0]}</div><div class="n"><div>${a[1]}</div><div class="sub">${a[2]}</div></div><div class="d fl" style="text-align:right">${a[3].replace(' · ','<br>')}</div></div>`).join(''));
+function sheet(html){setHTML($('#sheetBody'),'<div class="grab"></div>'+html);$('#sheet').classList.add('on')}
+function openAct(i){const a=acts[i];sheet(`<h1>${a[1]}</h1><div class="sub">${a[2]}</div>
+ <h2>Heart rate</h2><div class="card"><svg class="ch" id="s-hr" viewBox="0 0 360 120"></svg></div>
+ <div class="grid"><div class="m"><div class="l">Time in Z2</div><div class="v">38<small> min</small></div></div><div class="m"><div class="l">Aerobic effect</div><div class="v">2.8</div></div></div>
+ <div class="why">Coach note: HR drift 3% over the session, so aerobic base looks solid. <span class="chip">avg 141 bpm</span></div>`);
+ line('#s-hr',series(60,142,26,6,i+2),{color:'#fb7185'})}
+function openMetric(k){const t={hrv:['HRV','48 ms','5#5eead4',[35,68]],sleep:['Sleep','7h12','3#7cb8ff',[5,9]],rhr:['Resting HR','54 bpm','11#fbbf24',[46,60]],vo2:['VO₂max','52','7#c4f24a',[48,54]]}[k];
+ const [seed,col]=t[2].split('#');sheet(`<h1>${t[0]}</h1><div class="sub">Today ${t[1]} · last 30 days</div><div class="card" style="margin-top:12px"><svg class="ch" id="s-m" viewBox="0 0 360 120"></svg></div><div class="note">Full history in Trends</div>`);
+ line('#s-m',series(30,(t[3][0]+t[3][1])/2,(t[3][1]-t[3][0])*.4,0,+seed),{color:'#'+col,min:t[3][0],max:t[3][1]})}
+
+// plan
+const week=[['Mon','18',['Strength + mobility','45 min · gym','18:00','☁ 16°','s']],['Tue','19',['Rest','','','','']],['Wed','20',['Intervals 6×800 m','55 min · Z4','18:00','🌧 13°','r']],['Thu','21',['Easy run Z2','45 min · Z2','18:00','☀ 14°','s']],['Fri','22',['Swim technique','30 min · pool','07:00','indoor','s']],['Sat','23',['Long run 16 km','95 min · Z2','08:00','🌧 11° 80%','r']],['Sun','24',['Rest or swap','','08:00','☀ 12° dry','']]];
+setHTML($('#days'),week.map((d,i)=>`<div class="day ${i==3?'on':''}" onclick="showDay(${i})">${d[0]}<b>${d[1]}</b><i class="${d[2][4]}"></i></div>`).join(''));
+function showDay(i){document.querySelectorAll('.day').forEach((e,j)=>e.classList.toggle('on',i===j));const d=week[i],s=d[2];
+ $('#dayLabel').textContent=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][i];
+ setHTML($('#dayCard'),s[1]?`<div class="between"><b style="font-size:16px">${s[0]}</b><span class="tag ${s[4]=='r'?'wn':'ok'}">${s[4]=='r'?'WEATHER RISK':'FITS SLOT'}</span></div><div class="sub" style="margin-top:4px">${s[1]} · ${s[2]} · ${s[3]}</div>
+  <div class="row" style="margin-top:12px"><div class="btn">Move</div><div class="btn" onclick="go('ask')">Ask</div></div>`:`<b>${s[0]}</b><div class="sub" style="margin-top:4px">Recovery day. ${s[3]?'Slot '+s[2]+' · '+s[3]:''}</div>`)}
+showDay(3);
+(function(){const v=[40,0,55,45,30,95,0],W=360,H=90;setSVG($('#weekBars'),v.map((m,i)=>{const h=m/100*60;return `<rect x="${i*51+8}" y="${68-h}" width="34" height="${h||2}" rx="4" fill="${m>=90?'#fbbf24':m?'#c4f24a':'#232d37'}" opacity=".8"/><text x="${i*51+25}" y="84" fill="#8b9aa8" font-size="10" text-anchor="middle" font-family="monospace">${week[i][0]}</text>`}).join(''))})();
+
+
+// lock
+function unlock(){if(lockMode==='fail'){lockState('ok');return}$('#lock').classList.remove('on');go('today')}
+let lockMode='ok';
+function togglePw(){const p=$('#lk-pw').style.display!=='none';$('#lk-pw').style.display=p?'none':'block';$('#lk-pass').style.display=p?'block':'none';$('#lk-toggle').textContent=p?'Use password instead':'Use Face ID instead'}
+function lockState(m){lockMode=m;const b=$('#lk-banner'),e=$('#lk-err');b.style.display='none';b.className='banner';e.style.display='none';
+ if(m==='fail')e.style.display='block';
+ if(m==='soon'){b.style.display='block';b.textContent='Garmin key expires in 12 days. Renew it at connect.garmin.com > Settings > Personal API token, then paste the new key in You.'}
+ if(m==='exp'){b.style.display='block';b.classList.add('bad');b.textContent='Garmin key expired. Data is stale since 14 May. Unlock to paste a new key.'}
+ $('#lock').classList.add('on')}
+// coach threads
+const weeks=[['Week 3','18–24 May','Now · 6 msgs','~3.4k',1],['Week 2','11–17 May','Load up 9%. HRV dipped midweek, recovered. Calf niggle noted.','summary 180 tok'],['Week 1','4–10 May','Base block started. Sleep avg 7h05. All sessions done.','summary 150 tok'],['Week 0','27 Apr–3 May','Onboarding: goal, slots, zones set. Baseline HRV 51 ms.','summary 120 tok']];
+function openWeeks(){sheet(`<h1>Weeks</h1><div class="sub">One thread per plan week. Older weeks collapse to a short summary the coach carries forward.</div>
+ <div class="card" style="margin-top:12px;padding:0 14px">${weeks.map(w=>`<div class="wk ${w[4]?'cur':''}"><div class="between"><b>${w[0]} · ${w[1]}</b><span class="d fl">${w[3]}</span></div><div class="sub" style="margin-top:3px">${w[2]}</div></div>`).join('')}</div>
+ <div class="row"><div class="btn" onclick="openMemory()">Coach memory</div><div class="btn">Search old chats</div></div>`)}
+function openContext(){sheet(`<h1>What the coach reads</h1><div class="sub">Sent with every message. Nothing else leaves your server.</div>
+ <div class="card list" style="margin-top:12px"><div class="it"><span>System + safety rules</span><span>600</span></div><div class="it"><span>Profile, goal, slots</span><span>350</span></div><div class="it"><span>Memory facts (7)</span><span>220</span></div><div class="it"><span>Week 3 plan</span><span>400</span></div><div class="it"><span>Last 14 d metrics, compact</span><span>900</span></div><div class="it"><span>Week 2 summary</span><span>180</span></div><div class="it"><span>This week's messages</span><span>750</span></div></div>
+ <div class="why">Raw history is fetched by tool only when a question needs it, for example "VO₂max over 6 months". Older chats are never replayed.</div>`)}
+function openMemory(){sheet(`<h1>Coach memory</h1><div class="sub">Short facts it keeps across weeks. Edit or delete any.</div>
+ <div class="card" style="margin-top:12px;padding:0 14px"><div class="fact"><span>Goal: half marathon 12 Oct, sub 1:45</span><span>edit</span></div><div class="fact"><span>Left calf mild niggle since 12 May</span><span>edit</span></div><div class="fact"><span>Prefers long run on weekend mornings</span><span>edit</span></div><div class="fact"><span>Avoids running in rain</span><span>edit</span></div><div class="fact"><span>Baseline HRV 51 ms, RHR 52 bpm</span><span>auto</span></div><div class="fact"><span>Pool access Fri 07:00 only</span><span>edit</span></div><div class="fact"><span>Swim is secondary to run</span><span>edit</span></div></div>`)}
+
+
+function cseg(p){document.querySelectorAll('#cseg button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));document.querySelectorAll('#ask .pane').forEach(e=>e.classList.toggle('on',e.id==='p-'+p))}
+document.querySelectorAll('#cseg button').forEach(b=>b.onclick=()=>cseg(b.dataset.p));
+setHTML($('#wkList'),weeks.map(w=>`<div class="wk ${w[4]?'cur':''}"><div class="between"><b>${w[0]} · ${w[1]}</b><span class="d fl">${w[3]}</span></div><div class="sub" style="margin-top:3px">${w[2]}</div></div>`).join(''));
+function attach(k){const a=$('#att');if(!k){a.classList.remove('on');return}$('#attTxt').textContent=k==='s'?'Week 2 summary · +180 tok':'Week 2 full thread · +2.1k tok';a.classList.add('on');$('#sheet').classList.remove('on')}
+function openAttach(){sheet(`<h1>Attach a past week</h1><div class="sub">Added to your next message only. Choose how much the coach sees.</div><div style="margin-top:12px">
+ <div class="opt" onclick="attach('s')"><div><b>Week 2 summary</b><span class="sub">Review, key numbers, decisions</span></div><span class="d">+180 tok</span></div>
+ <div class="opt" onclick="attach('f')"><div><b>Week 2 full thread</b><span class="sub">All 18 messages</span></div><span class="d wn">+2.1k tok</span></div>
+ <div class="opt" onclick="attach('s')"><div><b>Week 2 metrics only</b><span class="sub">HRV, sleep, load as compact table</span></div><span class="d">+320 tok</span></div></div>`)}
+
+document.querySelectorAll('#feel .pill').forEach(p=>p.onclick=()=>{document.querySelectorAll('#feel .pill').forEach(x=>x.classList.remove('on'));p.classList.add('on')});
+</script>
+</body>
+</html>
