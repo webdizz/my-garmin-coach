@@ -44,3 +44,6 @@ next-env.d.ts
 
 # raw Garmin responses (personal health data)
 /fixtures/
+
+# local SQLite database
+/data/
