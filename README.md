@@ -3,7 +3,8 @@
 A small personal web app to explore my own Garmin Connect data: charts, training and
 fitness trends, and an AI assistant for questions about training, fitness and health.
 
-> Status: **planning.** No application code yet. See [`docs/`](docs/) for the current understanding.
+> Status: **planning.** No application code yet. See [`docs/`](docs/) for the current understanding and the
+> clickable UI prototype in [`docs/mockup/`](docs/mockup/index.html) (synthetic data).
 
 ## Goals
 
@@ -13,6 +14,11 @@ fitness trends, and an AI assistant for questions about training, fitness and he
 3. Provide an agentic assistant that answers questions grounded in my data and shows which
    numbers it used.
 4. Usable on iPhone, as an installed PWA.
+5. Private: single-user login. The Garmin key never reaches the browser.
+
+## Main screens
+
+Login, Today, Plan, Trends, Coach (weekly threads), You. Details in [`docs/ui-mockup.md`](docs/ui-mockup.md).
 
 ## Planned stack (tentative)
 
@@ -27,7 +33,8 @@ fitness trends, and an AI assistant for questions about training, fitness and he
 ```
 AGENTS.md        Guidance for AI coding agents
 README.md        This file
-docs/            Project understanding: architecture, Garmin API, data exports, decisions
+docs/            Project understanding: architecture, Garmin API, data exports, decisions, UI mockup
+docs/mockup/     Clickable HTML prototype (synthetic data)
 .env             Local secrets (not committed). Holds the Garmin personal API key.
 ```
 
