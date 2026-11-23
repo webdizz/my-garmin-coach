@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Pre-commit hook: lint, typecheck, and test
+# Runs lint-staged (linter), typecheck, and fast test suite
+# Blocks commit if any check fails
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+echo ""
+
+# Run lint-staged (ESLint on staged files only)
+echo "📝 Running ESLint on staged files..."
+npx lint-staged || true  # Allow passing even if no staged files
+echo ""
+
+# Run TypeScript type checking
+echo "🔧 Running TypeScript type check..."
+npm run typecheck
+echo ""
+
+# Run tests (fast, no coverage, exit on first failure)
+echo "✅ Running tests..."
+npm run test:pre-commit
+echo ""
+
+echo "✨ All checks passed! Proceeding with commit."

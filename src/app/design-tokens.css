@@ -1,0 +1,217 @@
+/**
+ * Design Tokens — Dark, Data-Dense, Mobile-First
+ * Extracted from docs/mockup/index.html
+ * 
+ * Color Palette:
+ * - Neutrals: bg (deep blue-black), s1-s2 (surfaces), line (borders), tx (text), mu (muted), dim (dimmed)
+ * - Status: ok (success/cyan), warn (warning/amber), bad (error/rose), acc (accent/lime), blue (info)
+ */
+
+:root {
+  /* Surfaces & Backgrounds */
+  --color-bg: #0a0d10;
+  --color-bg-dark: #05070a;
+  --color-surface-1: #11161b;
+  --color-surface-2: #181f26;
+  --color-line: #232d37;
+  --color-nav-bg: #0c1014;
+
+  /* Text & Muted */
+  --color-text: #e8eef3;
+  --color-muted: #8b9aa8;
+  --color-dimmed: #5a6875;
+
+  /* Status & Semantic */
+  --color-ok: #5eead4;
+  --color-warn: #fbbf24;
+  --color-bad: #fb7185;
+  --color-accent: #c4f24a;
+  --color-blue: #7cb8ff;
+
+  /* Borders */
+  --border-ok: #1f4a44;
+  --border-warn: #4d3e12;
+  --border-accent: #44571a;
+
+  /* Typography */
+  --font-sans: system-ui, -apple-system, sans-serif;
+  --font-mono: 'Monaco', 'Menlo', 'Courier New', monospace;
+  --font-size-base: 14px;
+  --line-height: 1.4;
+
+  /* Spacing (8px base) */
+  --space-xs: 2px;
+  --space-sm: 6px;
+  --space-md: 12px;
+  --space-lg: 14px;
+  --space-xl: 20px;
+
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+
+  /* Mobile-first max-width */
+  --max-width-app: 430px;
+  --max-height-app: 900px;
+}
+
+/* Light mode support (future) */
+@media (prefers-color-scheme: light) {
+  :root {
+    /* Placeholder for light mode */
+  }
+}
+
+/* Root element styles */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg-dark);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height);
+}
+
+/* Base utility classes */
+.bg-primary {
+  background-color: var(--color-bg);
+}
+
+.bg-surface-1 {
+  background-color: var(--color-surface-1);
+}
+
+.bg-surface-2 {
+  background-color: var(--color-surface-2);
+}
+
+.text-primary {
+  color: var(--color-text);
+}
+
+.text-muted {
+  color: var(--color-muted);
+}
+
+.text-dimmed {
+  color: var(--color-dimmed);
+}
+
+.text-ok {
+  color: var(--color-ok);
+}
+
+.text-warn {
+  color: var(--color-warn);
+}
+
+.text-bad {
+  color: var(--color-bad);
+}
+
+.text-accent {
+  color: var(--color-accent);
+}
+
+.text-blue {
+  color: var(--color-blue);
+}
+
+/* Border utilities */
+.border {
+  border: 1px solid var(--color-line);
+}
+
+.border-ok {
+  border: 1px solid var(--border-ok);
+}
+
+.border-warn {
+  border: 1px solid var(--border-warn);
+}
+
+.border-accent {
+  border: 1px solid var(--border-accent);
+}
+
+/* Card styles */
+.card {
+  background-color: var(--color-surface-1);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+/* Button styles */
+.btn {
+  border: 1px solid var(--color-line);
+  background-color: var(--color-surface-2);
+  color: var(--color-text);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+  font-weight: 600;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  text-align: center;
+}
+
+.btn:hover {
+  background-color: var(--color-surface-1);
+}
+
+.btn-primary {
+  background-color: var(--color-accent);
+  color: #10160a;
+  border-color: var(--color-accent);
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* Tag/Badge styles */
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  border: 1px solid var(--color-line);
+  color: var(--color-muted);
+  letter-spacing: 0.04em;
+}
+
+.tag-ok {
+  color: var(--color-ok);
+  border-color: var(--border-ok);
+}
+
+.tag-warn {
+  color: var(--color-warn);
+  border-color: var(--border-warn);
+}
+
+.tag-accent {
+  color: var(--color-accent);
+  border-color: var(--border-accent);
+}
+
+/* Responsive container */
+.container {
+  width: 100%;
+  max-width: var(--max-width-app);
+  margin: 0 auto;
+}
+
+/* Mobile-first breakpoints (future expansion) */
+@media (min-width: 768px) {
+  :root {
+    --font-size-base: 15px;
+  }
+}

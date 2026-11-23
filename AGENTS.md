@@ -50,10 +50,81 @@ Project memory is stored via `memory_store` (project `garminconnect`). Update ex
 
 ## Commands
 
-No build/test commands yet. Add them here once the Next.js scaffold exists.
-<!-- BEGIN:nextjs-agent-rules -->
+```bash
+# Development
+npm run dev              # Start dev server (http://localhost:3000)
+npm run build            # Build for production
+npm start               # Run production build
+
+# Testing & Quality
+npm run typecheck       # Run TypeScript type checking (tsc --noEmit)
+npm run test            # Run tests in watch mode (Jest)
+npm run test:ci          # Run tests with coverage (CI mode)
+npm run lint            # Run ESLint on src/
+
+# Scripts
+scripts/setup-testing.sh # Install testing dependencies (Jest, @testing-library/react)
+```
+
+### Design System
+
+- Design tokens: `src/app/design-tokens.css` — dark, data-dense, mobile-first color palette and utilities
+- Global styles: `src/app/globals.css` — imports design tokens and Tailwind
+- Mobile viewport: 430px max-width, 900px max-height (enforced in CSS custom properties)
 
 ## This is NOT the Next.js you know
+
+## Git Hooks & Pre-commit Verification
+
+**Automatic checks before every commit:**
+
+Pre-commit hooks (via Husky) verify code quality automatically:
+
+1. **ESLint** — lints staged files, fixes auto-fixable issues
+2. **TypeScript** — full type checking (tsc --noEmit)
+3. **Tests** — runs Jest with bail (stops on first failure)
+
+**Workflow:**
+
+```bash
+git add <files>
+git commit -m "message"
+# → Hooks run automatically; commit is blocked if any check fails
+# → Fix issues and retry
+```
+
+**Manual verification commands:**
+
+```bash
+# Full quality suite (lint + typecheck + test with coverage)
+npm run verify
+
+# Format code (Prettier)
+npm run format              # Auto-fix formatting issues
+npm run format:check        # Check without changing files
+
+# Tests
+npm run test:pre-commit     # Fast test run (used by hooks)
+npm run test:coverage       # Full coverage report
+npm run test                # Watch mode
+
+# CI verification (for automated pipelines)
+scripts/ci-verify.sh        # Full suite: format check + lint + typecheck + coverage
+```
+
+**Troubleshooting:**
+
+If a hook blocks your commit:
+
+- ESLint failure → `npm run lint` to see issues; `npm run format` to auto-fix
+- TypeScript failure → Review error output; fix type errors manually
+- Test failure → `npm run test:pre-commit` to debug; fix tests or code
+
+To bypass hooks (not recommended):
+
+```bash
+git commit --no-verify   # Skips all hooks
+```
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
