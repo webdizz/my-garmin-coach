@@ -17,7 +17,10 @@ open the entry for the area you are touching.
 
 - Runs left `running` by a restart are marked `error: interrupted` at startup
 - Default window is the last 3 days (Garmin revises recent data); range calls are chunked to 90 days
-- A 429 that survives retries stops the run; the oldest-first order keeps recent days for the next run
+- Slots are UTC (09:30, 18:00, 23:30 UTC), but the days pulled come from the server's local calendar. On a non-UTC host the pull window shifts by the timezone offset
+- Windows run newest-first, so recent days are stored before older ones. A 429 that survives retries stops the run and leaves only the oldest days of that kind for the next run
+- Activity lists stop after 20 pages (2000 entries). Hitting that cap records a run error
+- `Retry-After` from Garmin, when sent, replaces the computed backoff delay
 - Pull kinds beyond those verified in `docs/garmin-api.md` are not yet checked against real responses
 
 ## GC-8: Garmin client (token exchange and typed fetchers)

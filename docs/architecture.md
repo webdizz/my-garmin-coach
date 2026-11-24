@@ -26,7 +26,7 @@ Built so far: database foundation (GC-6) and the Garmin client (GC-8). The rest 
 
 ## Scheduled jobs (from the mockup)
 
-- Pull Garmin data at 09:30, 18:00 and 23:30 (server local time), plus manual refresh (`POST /api/sync`). Implemented in GC-9.
+- Pull Garmin data at 09:30, 18:00 and 23:30 UTC, plus manual refresh (`POST /api/sync`). Implemented in GC-9.
 - Morning briefing ready at 07:00.
 - Re-check weather against the plan every 6 h. Notify only on plan changes.
 - Garmin key expiry check, with a warning at 14 days.
