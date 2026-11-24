@@ -3,10 +3,10 @@ import { getDb } from '../db';
 import { syncRunRepo } from '../db/repos/sync-run';
 import { getGarminClient } from '../garmin';
 import { createScheduler } from './scheduler';
-import { createSyncService, type SyncService } from './run';
+import { createSyncService, describeError, type SyncService } from './run';
 
 export { getSyncStatus, type SyncStatus } from './status';
-export { DEFAULT_DAYS, MAX_DAYS, type SyncService } from './run';
+export { DEFAULT_DAYS, describeError, MAX_DAYS, type SyncService } from './run';
 
 /** Instrumentation and route handlers are bundled separately, so share the instance through globalThis. */
 const KEY = Symbol.for('garminconnect.sync');
@@ -15,11 +15,15 @@ const shared = (globalThis as Record<symbol, Shared | undefined>)[KEY] ?? {};
 (globalThis as Record<symbol, Shared>)[KEY] = shared;
 
 export function getSyncService(): Promise<SyncService> {
+  // Cleared on failure so a transient DB or config error is retried on the next call.
   shared.service ??= (async () => {
     const db = await getDb();
     await syncRunRepo(db).interruptRunning();
     return createSyncService({ db, client: getGarminClient() });
-  })();
+  })().catch((err) => {
+    shared.service = undefined;
+    throw err;
+  });
   return shared.service;
 }
 
@@ -27,21 +31,25 @@ export function getSyncService(): Promise<SyncService> {
 export async function startSyncScheduler(): Promise<void> {
   if (shared.started) return;
   shared.started = true;
-  const [db, service] = await Promise.all([getDb(), getSyncService()]);
-  const runs = syncRunRepo(db);
-  await createScheduler({
-    run: async () => {
-      const out = await service.run('schedule');
-      if (out === null) console.info('[sync] scheduled pull skipped: a pull is already running');
-      else if (out.status === 'error')
-        console.error(`[sync] run ${out.runId} (schedule) error: ${out.error}`);
-      else
-        console.info(
-          `[sync] run ${out.runId} (schedule) success: ${out.stored} day-payloads stored`
-        );
-    },
-    lastSuccessAt: async () => (await runs.lastSuccess())?.finishedAt ?? undefined,
-    onError: (err) =>
-      console.error('[sync] scheduled pull failed:', err instanceof Error ? err.message : err),
-  }).start();
+  try {
+    const [db, service] = await Promise.all([getDb(), getSyncService()]);
+    const runs = syncRunRepo(db);
+    await createScheduler({
+      run: async () => {
+        const out = await service.run('schedule');
+        if (out === null) console.info('[sync] scheduled pull skipped: a pull is already running');
+        else if (out.status === 'error')
+          console.error(`[sync] run ${out.runId} (schedule) error: ${out.error}`);
+        else
+          console.info(
+            `[sync] run ${out.runId} (schedule) success: ${out.stored} day-payloads stored`
+          );
+      },
+      lastSuccessAt: async () => (await runs.lastSuccess())?.finishedAt ?? undefined,
+      onError: (err) => console.error('[sync] scheduled pull failed:', describeError(err)),
+    }).start();
+  } catch (err) {
+    shared.started = false;
+    throw err;
+  }
 }

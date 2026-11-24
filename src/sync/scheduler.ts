@@ -64,7 +64,8 @@ export function createScheduler(options: SchedulerOptions): Scheduler {
         const last = await options.lastSuccessAt();
         if (!last || last.getTime() < previousSlot(now()).getTime()) {
           log(`catch-up pull (last success ${last ? last.toISOString() : 'never'})`);
-          await fire();
+          // Not awaited: a catch-up pull can take minutes and must not block server startup.
+          void fire();
         }
       } catch (err) {
         onError(err);
