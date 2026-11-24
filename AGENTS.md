@@ -8,7 +8,7 @@ Personal web app (PWA-capable) that pulls the owner's Garmin Connect data, shows
 and offers an agentic assistant for training, fitness and health questions.
 Single user. Not a multi-tenant product.
 
-Current state: **early development.** Next.js scaffold complete (GC-6: DB foundation with async SQLite + Drizzle + ULID).
+Current state: **early development.** Next.js scaffold complete (GC-6: DB foundation with async SQLite + Drizzle + ULID; GC-8: server-only Garmin client).
 Read `docs/` before making decisions.
 
 ## Key decisions (see `docs/decisions.md`)
@@ -83,6 +83,11 @@ src/
 │  ├── id.ts          # ULID monotonic ID generator
 │  ├── migrate.ts     # Migration runner
 │  ├── testing.ts     # In-memory test DB helper
+├── garmin/           # Garmin Personal API client (server-only)
+│  ├── client.ts      # Token exchange, host allowlist, typed endpoints (Date in, Promise out)
+│  ├── types.ts       # Response types (weight in grams, durations in seconds)
+│  ├── index.ts       # getGarminClient(); reads GARMIN_CONNECT_API_KEY by name
+│  └── __tests__/     # Offline tests, stub fetch, no real key or health data
 │  ├── repos/         # Typed repository layer
 │  └── __tests__/     # DB and repo tests
 drizzle/             # Migration files (generated)
@@ -165,6 +170,22 @@ git commit --no-verify   # Skips all hooks
 ```
 
 ## Recent changes
+
+### GC-8: Garmin client (token exchange and typed fetchers)
+
+**Added:**
+
+- `src/garmin/client.ts`: `createGarminClient()` with `GarminClient` methods for each verified endpoint
+- Token: `ApiKey` exchange → raw JWT, cached 24 h minus 10 min, one shared in-flight exchange, re-exchange once on 401
+- Dates are `Date` objects read as local calendar days (`formatDay()` → `YYYY-MM-DD`); methods are `async`
+- Host guard: HTTPS and `personal.connectapi.garmin.com` only, checked in the default transport and on every URL
+- `GarminApiError` carries status and path, never the response body or key
+- 22 offline tests
+
+**Gotchas:**
+
+- Weight `latestWeight.weight` is grams, not kg
+- `hrvDay()` returns `null` on 204 (no data for that day)
 
 ### GC-6: Database Foundation (async SQLite + Drizzle)
 

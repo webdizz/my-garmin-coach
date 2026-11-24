@@ -3,7 +3,7 @@
 A small personal web app to explore my own Garmin Connect data: charts, training and
 fitness trends, and an AI assistant for questions about training, fitness and health.
 
-> Status: **Early development.** Next.js scaffold complete with database foundation (async SQLite + Drizzle).
+> Status: **Early development.** Next.js scaffold, database foundation (async SQLite + Drizzle) and the server-only Garmin client are in place.
 > See [`docs/`](docs/) for architecture, decisions, and the UI prototype in [`docs/mockup/`](docs/mockup/index.html).
 
 ## Goals
@@ -34,6 +34,11 @@ Login, Today, Plan, Trends, Coach (weekly threads), You. Details in [`docs/ui-mo
 ```
 src/
 ├── app/              # Next.js app router (pages, layouts, API routes)
+├── garmin/           # Garmin Personal API client (server-only, typed fetchers)
+│  ├── client.ts      # Token exchange, host allowlist, typed endpoints
+│  ├── types.ts       # Response types from verified fixtures
+│  ├── index.ts       # Process-wide client from GARMIN_CONNECT_API_KEY
+│  └── __tests__/     # Offline tests with a stub fetch
 ├── db/               # Database layer
 │  ├── schema.ts      # Table definitions (raw_json, sync_run, settings)
 │  ├── client.ts      # libsql/drizzle client factory
@@ -109,6 +114,13 @@ git commit --no-verify
 ```
 
 ## Recent work
+
+### GC-8: Garmin client (token exchange and typed fetchers)
+
+- `src/garmin/`: server-only client for the Personal API. The API key is exchanged for a 24 h Bearer token, cached and re-requested on 401.
+- Typed fetchers take `Date` (local calendar day) and return promises: HRV, sleep, resting HR, HR zones, weight, body battery, stress, daily summary, fitness age, VO2max, activities.
+- Every request is limited to `https://personal.connectapi.garmin.com` over HTTPS. Errors carry status and path only.
+- 22 offline tests (stub fetch, synthetic data).
 
 ### GC-6: Database Foundation (async SQLite + Drizzle)
 

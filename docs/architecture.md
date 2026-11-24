@@ -1,6 +1,6 @@
 # Architecture (planned, tentative)
 
-Nothing is built yet. This is the working model.
+Built so far: database foundation (GC-6) and the Garmin client (GC-8). The rest is the working model.
 
 ## Components
 
@@ -35,6 +35,12 @@ Nothing is built yet. This is the working model.
 
 - Single-user login gate in front of all routes (D7).
 - Garmin personal key is read from the server environment only. It is never returned to the client.
+
+## Garmin client (implemented, GC-8)
+
+- `src/garmin/`: server-only typed client for the Personal API. The key is exchanged for a 24 h Bearer token, which is cached and re-requested on 401.
+- Dates are `Date` objects read as local calendar days; methods are `async` and return typed responses.
+- Requests are restricted to `https://personal.connectapi.garmin.com` over HTTPS. Errors carry status and path only, never the body (health data) or key.
 
 ## Coach data model (planned)
 
