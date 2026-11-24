@@ -30,7 +30,16 @@ export async function startSyncScheduler(): Promise<void> {
   const [db, service] = await Promise.all([getDb(), getSyncService()]);
   const runs = syncRunRepo(db);
   await createScheduler({
-    run: () => service.run('schedule'),
+    run: async () => {
+      const out = await service.run('schedule');
+      if (out === null) console.info('[sync] scheduled pull skipped: a pull is already running');
+      else if (out.status === 'error')
+        console.error(`[sync] run ${out.runId} (schedule) error: ${out.error}`);
+      else
+        console.info(
+          `[sync] run ${out.runId} (schedule) success: ${out.stored} day-payloads stored`
+        );
+    },
     lastSuccessAt: async () => (await runs.lastSuccess())?.finishedAt ?? undefined,
     onError: (err) =>
       console.error('[sync] scheduled pull failed:', err instanceof Error ? err.message : err),

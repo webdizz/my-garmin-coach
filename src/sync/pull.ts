@@ -24,9 +24,22 @@ function eachDay(from: Date, to: Date): Date[] {
   return days;
 }
 
-/** One payload per day, taken from an array response. */
-function indexByDay<T>(items: T[], dayOf: (item: T) => string): Map<string, unknown> {
-  return new Map(items.map((item) => [dayOf(item), item]));
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * One payload per day, taken from an array response. Entries without a valid day are dropped:
+ * Garmin returns empty placeholder rows (null date and fields) for days with no data.
+ */
+function indexByDay<T>(
+  items: T[],
+  dayOf: (item: T) => string | null | undefined
+): Map<string, unknown> {
+  const out = new Map<string, unknown>();
+  for (const item of items) {
+    const day = dayOf(item);
+    if (typeof day === 'string' && DAY.test(day)) out.set(day, item);
+  }
+  return out;
 }
 
 /** Per-day endpoint. A 204 means Garmin has nothing for that day, so the day is skipped. */
@@ -117,7 +130,8 @@ export const KIND_SPECS: readonly KindSpec[] = [
           })
         );
         for (const a of items) {
-          const day = a.startTimeLocal.slice(0, 10);
+          const day = a.startTimeLocal?.slice(0, 10);
+          if (!day || !DAY.test(day)) continue;
           byDay.set(day, [...(byDay.get(day) ?? []), a]);
         }
         if (items.length < ACTIVITY_PAGE) break;

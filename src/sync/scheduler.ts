@@ -9,6 +9,7 @@ export interface SchedulerOptions {
   onError?: (err: unknown) => void;
   setTimer?: (fn: () => void, ms: number) => unknown;
   clearTimer?: (handle: unknown) => void;
+  log?: (message: string) => void;
 }
 
 export interface Scheduler {
@@ -31,6 +32,7 @@ export function createScheduler(options: SchedulerOptions): Scheduler {
       return handle;
     });
   const clearTimer = options.clearTimer ?? ((h) => clearTimeout(h as NodeJS.Timeout));
+  const log = options.log ?? ((m) => console.info(`[sync] ${m}`));
   let timer: unknown;
   let stopped = true;
 
@@ -44,7 +46,9 @@ export function createScheduler(options: SchedulerOptions): Scheduler {
 
   const arm = () => {
     if (stopped) return;
-    const delay = Math.max(0, nextSlot(now()).getTime() - now().getTime());
+    const slot = nextSlot(now());
+    log(`next scheduled pull at ${slot.toISOString()}`);
+    const delay = Math.max(0, slot.getTime() - now().getTime());
     timer = setTimer(() => {
       void fire().finally(arm);
     }, delay);
@@ -54,10 +58,14 @@ export function createScheduler(options: SchedulerOptions): Scheduler {
     async start() {
       if (!stopped) return;
       stopped = false;
+      log('scheduler started');
       arm();
       try {
         const last = await options.lastSuccessAt();
-        if (!last || last.getTime() < previousSlot(now()).getTime()) await fire();
+        if (!last || last.getTime() < previousSlot(now()).getTime()) {
+          log(`catch-up pull (last success ${last ? last.toISOString() : 'never'})`);
+          await fire();
+        }
       } catch (err) {
         onError(err);
       }

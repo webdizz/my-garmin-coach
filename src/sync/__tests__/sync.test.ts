@@ -10,7 +10,7 @@ import { nextSlot, previousSlot } from '../slots';
 import { getSyncStatus } from '../status';
 
 // Synthetic data only.
-const NOW = new Date(2030, 0, 10, 12, 0);
+const NOW = new Date(Date.UTC(2030, 0, 10, 12, 0));
 
 function fakeClient(overrides: Partial<GarminClient> = {}): GarminClient {
   const unused = async () => {
@@ -39,10 +39,11 @@ const fast = { retries: 2, sleep: async () => {} };
 
 describe('slots', () => {
   it('finds next and previous slot', () => {
-    expect(nextSlot(NOW)).toEqual(new Date(2030, 0, 10, 18, 0));
-    expect(nextSlot(new Date(2030, 0, 10, 23, 30))).toEqual(new Date(2030, 0, 11, 9, 30));
-    expect(previousSlot(NOW)).toEqual(new Date(2030, 0, 10, 9, 30));
-    expect(previousSlot(new Date(2030, 0, 10, 8, 0))).toEqual(new Date(2030, 0, 9, 23, 30));
+    const utc = (d: number, h: number, m: number) => new Date(Date.UTC(2030, 0, d, h, m));
+    expect(nextSlot(NOW)).toEqual(utc(10, 18, 0));
+    expect(nextSlot(utc(10, 23, 30))).toEqual(utc(11, 9, 30));
+    expect(previousSlot(NOW)).toEqual(utc(10, 9, 30));
+    expect(previousSlot(utc(10, 8, 0))).toEqual(utc(9, 23, 30));
   });
 });
 
@@ -83,6 +84,34 @@ describe('sync service', () => {
     expect(second?.status).toBe('success');
     const rows = await db.$client.execute('select count(*) c from raw_json');
     expect(Number(rows.rows[0].c)).toBe(first?.stored);
+  });
+
+  it('skips empty placeholder rows instead of failing the run', async () => {
+    const db = await createTestDb();
+    const client = fakeClient({
+      sleepRange: async () => [
+        { calendarDate: null, sleepTimeSeconds: null } as never,
+        { calendarDate: '2030-01-08', sleepTimeSeconds: 100 } as never,
+      ],
+    });
+    const out = await createSyncService({ db, client, now: () => NOW, retry: fast }).run('manual');
+    expect(out?.status).toBe('success');
+    const rows = await db.$client.execute("select date from raw_json where kind = 'sleep'");
+    expect(rows.rows.map((r) => r.date)).toEqual(['2030-01-08']);
+  });
+
+  it('does not put bound parameters (health data) into the run error', async () => {
+    const db = await createTestDb();
+    const secret = 'SECRET-HRV-VALUE';
+    const client = fakeClient({
+      sleepRange: async () => [{ calendarDate: '2030-01-08', sleepTimeSeconds: secret } as never],
+    });
+    // Make the upsert fail: drop the table the repo writes to.
+    await db.$client.execute('drop table raw_json');
+    const out = await createSyncService({ db, client, now: () => NOW, retry: fast }).run('manual');
+    expect(out?.status).toBe('error');
+    expect(out?.error).not.toContain(secret);
+    expect(out?.error).not.toContain('garmin');
   });
 
   it('records an error run and keeps other kinds', async () => {
@@ -169,12 +198,33 @@ describe('interruptRunning', () => {
 });
 
 describe('scheduler', () => {
+  it('logs start, next slot and catch-up', async () => {
+    const log = jest.fn();
+    const s = createScheduler({
+      run: async () => {},
+      lastSuccessAt: async () => undefined,
+      now: () => NOW,
+      setTimer: () => 0,
+      clearTimer: () => {},
+      log,
+    });
+    await s.start();
+    const messages = log.mock.calls.map((c) => c[0] as string);
+    expect(messages).toEqual([
+      'scheduler started',
+      `next scheduled pull at ${new Date(Date.UTC(2030, 0, 10, 18, 0)).toISOString()}`,
+      'catch-up pull (last success never)',
+    ]);
+    s.stop();
+  });
+
   it('catches up on start when the last slot was missed, then arms the next slot', async () => {
     const run = jest.fn(async () => {});
     const delays: number[] = [];
     const s = createScheduler({
       run,
-      lastSuccessAt: async () => new Date(2030, 0, 9, 10, 0),
+      lastSuccessAt: async () => new Date(Date.UTC(2030, 0, 9, 10, 0)),
+      log: () => {},
       now: () => NOW,
       setTimer: (_fn, ms) => void delays.push(ms),
       clearTimer: () => {},
@@ -189,7 +239,8 @@ describe('scheduler', () => {
     const run = jest.fn(async () => {});
     const s = createScheduler({
       run,
-      lastSuccessAt: async () => new Date(2030, 0, 10, 10, 0),
+      lastSuccessAt: async () => new Date(Date.UTC(2030, 0, 10, 10, 0)),
+      log: () => {},
       now: () => NOW,
       setTimer: () => 0,
       clearTimer: () => {},

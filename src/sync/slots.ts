@@ -1,4 +1,4 @@
-/** Local-time pull slots (server time zone): 09:30, 18:00 and 23:30. */
+/** Pull slots in UTC: 09:30, 18:00 and 23:30 every day. */
 export const SYNC_SLOTS: readonly { hour: number; minute: number }[] = [
   { hour: 9, minute: 30 },
   { hour: 18, minute: 0 },
@@ -7,12 +7,15 @@ export const SYNC_SLOTS: readonly { hour: number; minute: number }[] = [
 
 function slotsOn(day: Date): Date[] {
   return SYNC_SLOTS.map(
-    (s) => new Date(day.getFullYear(), day.getMonth(), day.getDate(), s.hour, s.minute)
+    (s) =>
+      new Date(
+        Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), s.hour, s.minute)
+      )
   );
 }
 
 function dayOffset(day: Date, n: number): Date {
-  return new Date(day.getFullYear(), day.getMonth(), day.getDate() + n);
+  return new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate() + n));
 }
 
 /** First slot strictly after `now`. */

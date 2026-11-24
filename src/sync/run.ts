@@ -2,7 +2,7 @@ import type { Db } from '../db/client';
 import { rawJsonRepo } from '../db/repos/raw-json';
 import { syncRunRepo } from '../db/repos/sync-run';
 import type { SyncRunRow } from '../db/schema';
-import type { GarminClient } from '../garmin/client';
+import { GarminApiError, type GarminClient } from '../garmin/client';
 import { isRateLimited, withBackoff, type BackoffOptions } from './backoff';
 import { addDays, KIND_SPECS, type KindSpec } from './pull';
 
@@ -49,7 +49,18 @@ function windows(from: Date, to: Date, size: number): [Date, Date][] {
   return out;
 }
 
-const describe = (err: unknown) => (err instanceof Error ? err.message : 'unknown error');
+/**
+ * Short, safe description of an error for the run record and logs. Drizzle puts the bound SQL
+ * parameters (health data) into `message`, so use the driver cause when there is one.
+ */
+export function describeError(err: unknown): string {
+  if (err instanceof GarminApiError) return err.message;
+  const cause = err instanceof Error ? err.cause : undefined;
+  if (cause instanceof Error) return cause.message;
+  if (err instanceof Error && err.message.startsWith('Failed query:'))
+    return 'database query failed';
+  return err instanceof Error ? err.message : 'unknown error';
+}
 
 export function createSyncService(options: SyncServiceOptions): SyncService {
   const { db, client, specs = KIND_SPECS } = options;
@@ -63,6 +74,7 @@ export function createSyncService(options: SyncServiceOptions): SyncService {
       throw new RangeError(`days must be an integer from 1 to ${MAX_DAYS}`);
     }
     const run = await runs.start(trigger);
+    console.info(`[sync] run ${run.id} (${trigger}) started: last ${days} days`);
     const current = now();
     const today = new Date(current.getFullYear(), current.getMonth(), current.getDate());
     const spans = windows(addDays(today, -(days - 1)), today, CHUNK_DAYS);
@@ -81,7 +93,7 @@ export function createSyncService(options: SyncServiceOptions): SyncService {
             stored++;
           }
         } catch (err) {
-          errors.push(`${spec.kind}: ${describe(err)}`);
+          errors.push(`${spec.kind}: ${describeError(err)}`);
           rateLimited = isRateLimited(err);
           break;
         }
@@ -90,6 +102,9 @@ export function createSyncService(options: SyncServiceOptions): SyncService {
 
     const error = errors.length ? errors.join('; ').slice(0, MAX_ERROR_LENGTH) : undefined;
     await runs.finish(run.id, error === undefined ? {} : { error });
+    if (error === undefined)
+      console.info(`[sync] run ${run.id} (${trigger}) success: ${stored} day-payloads stored`);
+    else console.error(`[sync] run ${run.id} (${trigger}) error: ${error}`);
     return { runId: run.id, status: error === undefined ? 'success' : 'error', stored, error };
   }
 
