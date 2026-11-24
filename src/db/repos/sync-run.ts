@@ -22,6 +22,24 @@ export function syncRunRepo(db: Db) {
         .where(eq(syncRun.id, id));
     },
 
+    /** Mark runs left `running` by a crashed or restarted process as failed. Call once at startup. */
+    async interruptRunning(): Promise<void> {
+      await db
+        .update(syncRun)
+        .set({ status: 'error', error: 'interrupted', finishedAt: new Date() })
+        .where(eq(syncRun.status, 'running'));
+    },
+
+    async lastSuccess(): Promise<SyncRunRow | undefined> {
+      const [row] = await db
+        .select()
+        .from(syncRun)
+        .where(eq(syncRun.status, 'success'))
+        .orderBy(desc(syncRun.id))
+        .limit(1);
+      return row;
+    },
+
     async latest(): Promise<SyncRunRow | undefined> {
       const [row] = await db.select().from(syncRun).orderBy(desc(syncRun.id)).limit(1);
       return row;

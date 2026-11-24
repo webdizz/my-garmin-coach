@@ -90,6 +90,7 @@ src/
 │  ├── types.ts       # Response types (weight in grams, durations in seconds)
 │  ├── index.ts       # getGarminClient(); reads GARMIN_CONNECT_API_KEY by name
 │  └── __tests__/     # Offline tests, stub fetch, no real key or health data
+├── sync/             # Sync job (GC-9): pull specs, backoff, run service, scheduler, status
 drizzle/             # Migration files (generated)
 docs/                # Architecture, API docs, decisions, UI mockup
 fixtures/            # Gitignored: personal Garmin exports
@@ -114,8 +115,6 @@ scripts/             # CI/quality scripts
 - **Test helper:** `createTestDb()` for in-memory migrations
 - **Repos:** Typed, one per table (rawJsonRepo, syncRunRepo, settingsRepo)
 - **Environment:** `DATABASE_URL` (default `file:./data/app.db`)
-
-## This is NOT the Next.js you know
 
 ## Git Hooks & Pre-commit Verification
 
@@ -171,48 +170,7 @@ git commit --no-verify   # Skips all hooks
 
 ## Recent changes
 
-### GC-8: Garmin client (token exchange and typed fetchers)
-
-**Added:**
-
-- `src/garmin/client.ts`: `createGarminClient()` with `GarminClient` methods for each verified endpoint
-- Token: `ApiKey` exchange → raw JWT, cached 24 h minus 10 min, one shared in-flight exchange, re-exchange once on 401
-- Dates are `Date` objects read as local calendar days (`formatDay()` → `YYYY-MM-DD`); methods are `async`
-- Host guard: HTTPS and `personal.connectapi.garmin.com` only, checked in the default transport and on every URL
-- `GarminApiError` carries status and path, never the response body or key
-- Offline tests with a stub fetch (no real key or health data)
-
-**Gotchas:**
-
-- Weight `latestWeight.weight` is grams, not kg
-- `hrvDay()` returns `null` on 204 (no data for that day)
-
-### GC-6: Database Foundation (async SQLite + Drizzle)
-
-**Added:**
-
-- `src/db/` module with schema, client factory, migration runner
-- Async `@libsql/client` driver (preserves event loop)
-- Drizzle ORM with SQLite schema (migration path to Postgres)
-- ULID monotonic IDs for all tables
-- Three base tables: raw_json, sync_run, settings
-- Typed repository layer (rawJsonRepo, syncRunRepo, settingsRepo)
-- In-memory test helper (`createTestDb()`)
-- Migration generation with `npm run db:generate`
-- 6 synthetic-data tests in `src/db/__tests__/repos.test.ts`
-
-**Configuration:**
-
-- Dev server fixed on port 3344 (`npm run dev`)
-- Drizzle config in `drizzle.config.ts`
-- Migrations stored in `drizzle/`
-- `/data/` gitignored (local SQLite database)
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
+Listed [`docs/changes.md`](docs/changes.md) (per-ticket log with gotchas). Read it when working in an area a recent ticket touched.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
@@ -221,5 +179,4 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
 <!-- END:nextjs-agent-rules -->

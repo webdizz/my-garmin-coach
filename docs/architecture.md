@@ -26,10 +26,18 @@ Built so far: database foundation (GC-6) and the Garmin client (GC-8). The rest 
 
 ## Scheduled jobs (from the mockup)
 
-- Pull Garmin data at 06:30, 12:00 and 21:00.
+- Pull Garmin data at 09:30, 18:00 and 23:30 (server local time), plus manual refresh (`POST /api/sync`). Implemented in GC-9.
 - Morning briefing ready at 07:00.
 - Re-check weather against the plan every 6 h. Notify only on plan changes.
 - Garmin key expiry check, with a warning at 14 days.
+
+## Sync job (implemented, GC-9)
+
+- `src/sync/`: pulls each kind into `raw_json` (upsert per source/kind/date, so re-runs never duplicate). Default window is the last 3 days; `days` up to 365 backfills in 90-day chunks.
+- `src/instrumentation.ts` starts the scheduler once per server process (skipped when `GARMIN_CONNECT_API_KEY` is unset). On start it runs a catch-up pull if the latest slot passed without a success.
+- Retries 429, 5xx and timeouts with exponential backoff (1 s, doubling, 3 retries). A 429 that exhausts retries ends the run as an error.
+- One pull at a time. `sync_run` records trigger, status and error. Runs left `running` by a restart are marked `error: interrupted`.
+- `GET /api/sync` returns `{state, lastRun, lastSuccessAt, nextPullAt}` for the SYNCED banner. `POST /api/sync` (optional `{days}`) returns 202, or 409 if already running.
 
 ## Auth
 
