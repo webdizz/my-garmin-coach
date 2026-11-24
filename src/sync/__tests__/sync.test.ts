@@ -174,7 +174,7 @@ describe('sync service', () => {
     await createSyncService({ db, client, now: () => NOW, retry: fast }).run('manual', {
       days: 200,
     });
-    expect(spans).toEqual([90, 90, 20]);
+    expect(spans).toEqual([20, 90, 90]);
   });
 
   it('rejects an out-of-range days value', async () => {

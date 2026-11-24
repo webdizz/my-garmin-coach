@@ -4,7 +4,7 @@ import { syncRunRepo } from '../db/repos/sync-run';
 import type { SyncRunRow } from '../db/schema';
 import { GarminApiError, type GarminClient } from '../garmin/client';
 import { isRateLimited, withBackoff, type BackoffOptions } from './backoff';
-import { addDays, KIND_SPECS, type KindSpec } from './pull';
+import { addDays, KIND_SPECS, type KindSpec, type PullContext } from './pull';
 
 export type SyncTrigger = SyncRunRow['trigger'];
 
@@ -67,7 +67,7 @@ export function createSyncService(options: SyncServiceOptions): SyncService {
   const now = options.now ?? (() => new Date());
   const raw = rawJsonRepo(db);
   const runs = syncRunRepo(db);
-  const ctx = { client, retry: <T>(fn: () => Promise<T>) => withBackoff(fn, options.retry) };
+  const retry = <T>(fn: () => Promise<T>) => withBackoff(fn, options.retry);
 
   async function execute(trigger: SyncTrigger, days: number): Promise<SyncOutcome> {
     if (!Number.isInteger(days) || days < 1 || days > MAX_DAYS) {
@@ -79,14 +79,18 @@ export function createSyncService(options: SyncServiceOptions): SyncService {
     const today = new Date(current.getFullYear(), current.getMonth(), current.getDate());
     const spans = windows(addDays(today, -(days - 1)), today, CHUNK_DAYS);
     const errors: string[] = [];
+    // Pull-level warnings (e.g. a truncated list) go into the run error so they are visible.
+    const ctx: PullContext = { client, retry, warn: (message) => errors.push(message) };
     let stored = 0;
     let rateLimited = false;
 
-    // Oldest window first, so a rate limit leaves the recent days (the ones the UI shows) for the next run.
+    // Newest window first: recent days (the ones the UI shows) are stored first. A rate limit stops
+    // the run, so only the oldest days of the kind in progress are left for the next run.
+    const newestFirst = [...spans].reverse();
     for (const spec of specs) {
       if (rateLimited) break;
-      for (const [i, [from, to]] of spans.entries()) {
-        if (spec.latestOnly && i < spans.length - 1) continue;
+      for (const [i, [from, to]] of newestFirst.entries()) {
+        if (spec.latestOnly && i > 0) continue;
         try {
           for (const [date, payload] of await spec.pull(ctx, from, to)) {
             await raw.upsert({ source: SYNC_SOURCE, kind: spec.kind, date }, payload);

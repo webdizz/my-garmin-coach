@@ -4,6 +4,8 @@ export interface PullContext {
   client: GarminClient;
   /** Wraps every Garmin call with the retry/backoff policy. */
   retry: <T>(fn: () => Promise<T>) => Promise<T>;
+  /** Record a non-fatal problem. It is kept in the run error, so the run shows as `error`. */
+  warn(message: string): void;
 }
 
 /** How one Garmin data kind is pulled: a map of local day (YYYY-MM-DD) to the verbatim payload for that day. */
@@ -118,9 +120,10 @@ export const KIND_SPECS: readonly KindSpec[] = [
   {
     /** Stored as an array per local start day (a day can hold several activities). */
     kind: 'activities',
-    async pull({ client, retry }, from, to) {
+    async pull({ client, retry, warn }, from, to) {
       const byDay = new Map<string, unknown[]>();
-      for (let page = 0; page < MAX_ACTIVITY_PAGES; page++) {
+      let done = false;
+      for (let page = 0; page < MAX_ACTIVITY_PAGES && !done; page++) {
         const items = await retry(() =>
           client.activities({
             start: page * ACTIVITY_PAGE,
@@ -134,7 +137,12 @@ export const KIND_SPECS: readonly KindSpec[] = [
           if (!day || !DAY.test(day)) continue;
           byDay.set(day, [...(byDay.get(day) ?? []), a]);
         }
-        if (items.length < ACTIVITY_PAGE) break;
+        done = items.length < ACTIVITY_PAGE;
+      }
+      if (!done) {
+        warn(
+          `activities: stopped after ${MAX_ACTIVITY_PAGES * ACTIVITY_PAGE} entries; older ones in the window were not pulled`
+        );
       }
       return byDay;
     },

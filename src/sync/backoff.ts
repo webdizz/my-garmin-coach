@@ -21,7 +21,10 @@ export function isRetryable(err: unknown): boolean {
   return err instanceof Error && err.name === 'TimeoutError';
 }
 
-/** Run `fn`, retrying retryable failures with exponential backoff. Rethrows the last error. */
+/**
+ * Run `fn`, retrying retryable failures with exponential backoff. A `Retry-After` from Garmin, when
+ * sent, replaces the computed delay. Rethrows the last error.
+ */
 export async function withBackoff<T>(
   fn: () => Promise<T>,
   options: BackoffOptions = {}
@@ -32,7 +35,8 @@ export async function withBackoff<T>(
       return await fn();
     } catch (err) {
       if (attempt >= retries || !isRetryable(err)) throw err;
-      await sleep(Math.min(baseMs * 2 ** attempt, maxMs));
+      const hinted = err instanceof GarminApiError ? err.retryAfterMs : undefined;
+      await sleep(Math.min(hinted ?? baseMs * 2 ** attempt, maxMs));
     }
   }
 }
