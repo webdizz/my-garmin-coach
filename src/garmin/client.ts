@@ -62,7 +62,9 @@ export interface GarminClientOptions {
 export class GarminApiError extends Error {
   constructor(
     readonly status: number,
-    readonly path: string
+    readonly path: string,
+    /** Milliseconds from a `Retry-After` header, when Garmin sent one. */
+    readonly retryAfterMs?: number
   ) {
     super(`Garmin API ${status} for ${path}`);
     this.name = 'GarminApiError';
@@ -103,6 +105,16 @@ export function formatDay(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+/** `Retry-After` as milliseconds (delta-seconds or HTTP date). Undefined when absent or invalid. */
+function retryAfterMs(res: Response, nowMs: number): number | undefined {
+  const value = res.headers.get('retry-after');
+  if (!value) return undefined;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
+  const date = Date.parse(value);
+  return Number.isNaN(date) ? undefined : Math.max(0, date - nowMs);
 }
 
 /**
@@ -156,7 +168,7 @@ export function createGarminClient(options: GarminClientOptions): GarminClient {
       res = await call(await getToken(true));
     }
     if (allowEmpty && res.status === 204) return null;
-    if (!res.ok) throw new GarminApiError(res.status, path);
+    if (!res.ok) throw new GarminApiError(res.status, path, retryAfterMs(res, now()));
     if (res.status === 204) throw new GarminApiError(res.status, path);
     return (await res.json()) as T;
   }
