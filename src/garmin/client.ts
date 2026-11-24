@@ -19,6 +19,9 @@ export const DEFAULT_BASE_URL = 'https://personal.connectapi.garmin.com';
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 const TOKEN_SAFETY_MS = 10 * 60 * 1000;
 
+/** Per-request ceiling so a hung connection cannot stall callers (or the shared token exchange). */
+export const REQUEST_TIMEOUT_MS = 15_000;
+
 /** Hosts the API key and Bearer token may be sent to. Anything else is refused. */
 const ALLOWED_HOSTS = new Set(['personal.connectapi.garmin.com']);
 
@@ -28,7 +31,12 @@ export async function guardedFetch(input: string, init?: RequestInit): Promise<R
   if (url.protocol !== 'https:' || !ALLOWED_HOSTS.has(url.hostname)) {
     throw new Error(`Refusing request to host not allowed: ${url.hostname}`);
   }
-  return fetch(url, init);
+  // `redirect: 'error'` keeps the allowlist authoritative: a 3xx to another host fails instead of being followed.
+  return fetch(url, {
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    ...init,
+    redirect: 'error',
+  });
 }
 
 /** Validate the base URL: HTTPS and an allowlisted host. Returns the origin only. */
@@ -139,7 +147,8 @@ export function createGarminClient(options: GarminClientOptions): GarminClient {
     return inflight;
   }
 
-  async function get<T>(path: string, allowEmpty = false): Promise<T | null> {
+  /** GET JSON. A 204 returns `null` only when `allowEmpty`; otherwise it is a `GarminApiError`. */
+  async function request<T>(path: string, allowEmpty: boolean): Promise<T | null> {
     const call = (bearer: string) =>
       doFetch(urlFor(path), { headers: { Authorization: `Bearer ${bearer}` } });
     let res = await call(await getToken());
@@ -148,62 +157,58 @@ export function createGarminClient(options: GarminClientOptions): GarminClient {
     }
     if (allowEmpty && res.status === 204) return null;
     if (!res.ok) throw new GarminApiError(res.status, path);
+    if (res.status === 204) throw new GarminApiError(res.status, path);
     return (await res.json()) as T;
   }
 
+  const get = async <T>(path: string): Promise<T> => (await request<T>(path, false)) as T;
+  const getOptional = <T>(path: string): Promise<T | null> => request<T>(path, true);
+
   return {
     async hrvDay(date) {
-      return get<HrvDay>(`/hrv-service/hrv/${formatDay(date)}`, true);
+      return getOptional<HrvDay>(`/hrv-service/hrv/${formatDay(date)}`);
     },
     async hrvRange(from, to) {
-      return get<HrvRange>(
-        `/hrv-service/hrv/daily/${formatDay(from)}/${formatDay(to)}`
-      ) as Promise<HrvRange>;
+      return get<HrvRange>(`/hrv-service/hrv/daily/${formatDay(from)}/${formatDay(to)}`);
     },
     async sleepRange(from, to) {
       return get<SleepSummary[]>(
         `/sleep-service/sleep/dailySleepSummariesByDate?startDate=${formatDay(from)}&endDate=${formatDay(to)}`
-      ) as Promise<SleepSummary[]>;
+      );
     },
     async restingHeartRate(date) {
       return get<DailyHeartRate>(
         `/wellness-service/wellness/dailyHeartRate?date=${formatDay(date)}`
-      ) as Promise<DailyHeartRate>;
+      );
     },
     async heartRateZones() {
-      return get<HeartRateZones[]>('/biometric-service/heartRateZones/v2') as Promise<
-        HeartRateZones[]
-      >;
+      return get<HeartRateZones[]>('/biometric-service/heartRateZones/v2');
     },
     async weightRange(from, to) {
-      return get<WeightRange>(
-        `/weight-service/weight/range/${formatDay(from)}/${formatDay(to)}`
-      ) as Promise<WeightRange>;
+      return get<WeightRange>(`/weight-service/weight/range/${formatDay(from)}/${formatDay(to)}`);
     },
     async bodyBatteryRange(from, to) {
       return get<BodyBatteryDay[]>(
         `/wellness-service/wellness/bodyBattery/reports/daily?startDate=${formatDay(from)}&endDate=${formatDay(to)}`
-      ) as Promise<BodyBatteryDay[]>;
+      );
     },
     async stressRange(from, to) {
       return get<StressDay[]>(
         `/usersummary-service/stats/stress/daily/${formatDay(from)}/${formatDay(to)}`
-      ) as Promise<StressDay[]>;
+      );
     },
     async dailySummary(date) {
       return get<DailySummary>(
         `/usersummary-service/usersummary/daily?calendarDate=${formatDay(date)}`
-      ) as Promise<DailySummary>;
+      );
     },
     async fitnessAge(date) {
-      return get<FitnessAge>(
-        `/fitnessage-service/fitnessage/v2/${formatDay(date)}`
-      ) as Promise<FitnessAge>;
+      return get<FitnessAge>(`/fitnessage-service/fitnessage/v2/${formatDay(date)}`);
     },
     async vo2MaxRange(from, to) {
       return get<Vo2MaxDay[]>(
         `/metrics-service/metrics/maxmet/daily/${formatDay(from)}/${formatDay(to)}`
-      ) as Promise<Vo2MaxDay[]>;
+      );
     },
     async activities({ start = 0, limit = 20, startDate, endDate }) {
       const q = new URLSearchParams({ start: String(start), limit: String(limit) });
@@ -211,7 +216,7 @@ export function createGarminClient(options: GarminClientOptions): GarminClient {
       if (endDate) q.set('endDate', formatDay(endDate));
       return get<ActivitySummary[]>(
         `/activitylist-service/activities/search/activities?${q.toString()}`
-      ) as Promise<ActivitySummary[]>;
+      );
     },
   };
 }

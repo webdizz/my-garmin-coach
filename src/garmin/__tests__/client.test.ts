@@ -4,6 +4,7 @@ import {
   formatDay,
   GarminApiError,
   guardedFetch,
+  REQUEST_TIMEOUT_MS,
   resolveBaseUrl,
   type FetchLike,
 } from '../client';
@@ -123,6 +124,53 @@ describe('createGarminClient auth', () => {
   });
 });
 
+describe('createGarminClient failure paths', () => {
+  const range = [new Date(2026, 0, 1), new Date(2026, 0, 2)] as const;
+
+  it('gives up after a second 401 instead of looping', async () => {
+    let dataCalls = 0;
+    const { fetch } = fakeFetch({
+      [TOKEN_PATH]: () => new Response('jwt'),
+      '/weight-service': () => (++dataCalls, new Response('', { status: 401 })),
+    });
+    const client = createGarminClient({ apiKey: 'k', fetch });
+    const err = await client.weightRange(...range).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(GarminApiError);
+    expect((err as GarminApiError).status).toBe(401);
+    expect(dataCalls).toBe(2);
+  });
+
+  it('retries the token exchange after a failed one', async () => {
+    let tokenCalls = 0;
+    const { fetch } = fakeFetch({
+      [TOKEN_PATH]: () =>
+        ++tokenCalls === 1 ? new Response('', { status: 503 }) : new Response('jwt'),
+      '/weight-service': () => json({ dailyWeightSummaries: [] }),
+    });
+    const client = createGarminClient({ apiKey: 'k', fetch });
+    await expect(client.weightRange(...range)).rejects.toBeInstanceOf(GarminApiError);
+    await expect(client.weightRange(...range)).resolves.toEqual({ dailyWeightSummaries: [] });
+    expect(tokenCalls).toBe(2);
+  });
+
+  it('rejects an empty token body', async () => {
+    const { fetch } = fakeFetch({ [TOKEN_PATH]: () => new Response('  ') });
+    const client = createGarminClient({ apiKey: 'k', fetch });
+    await expect(client.weightRange(...range)).rejects.toBeInstanceOf(GarminApiError);
+  });
+
+  it('turns an unexpected 204 into GarminApiError, not a JSON SyntaxError', async () => {
+    const { fetch } = fakeFetch({
+      [TOKEN_PATH]: () => new Response('jwt'),
+      '/weight-service': () => new Response(null, { status: 204 }),
+    });
+    const client = createGarminClient({ apiKey: 'k', fetch });
+    const err = await client.weightRange(...range).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(GarminApiError);
+    expect((err as GarminApiError).status).toBe(204);
+  });
+});
+
 describe('createGarminClient endpoints', () => {
   const routes = () => ({
     [TOKEN_PATH]: () => new Response('jwt'),
@@ -189,6 +237,25 @@ describe('host allowlist', () => {
   it('refuses other hosts and plain HTTP', () => {
     expect(() => resolveBaseUrl('https://evil.example.com')).toThrow(/not allowed/);
     expect(() => resolveBaseUrl('http://personal.connectapi.garmin.com')).toThrow(/not allowed/);
+  });
+
+  it('reduces a base URL with a path or credentials to its origin', () => {
+    expect(resolveBaseUrl(`https://user:pw@personal.connectapi.garmin.com/x?y=1`)).toBe(BASE);
+  });
+
+  it('sends requests with redirect:error and a timeout signal', async () => {
+    const realFetch = global.fetch;
+    const spy = jest.fn().mockResolvedValue(new Response('ok'));
+    global.fetch = spy as unknown as typeof fetch;
+    try {
+      await guardedFetch(`${BASE}/x`, { headers: { a: 'b' } });
+      const init = spy.mock.calls[0][1] as RequestInit;
+      expect(init.redirect).toBe('error');
+      expect(init.signal).toBeInstanceOf(AbortSignal);
+      expect(REQUEST_TIMEOUT_MS).toBeGreaterThan(0);
+    } finally {
+      global.fetch = realFetch;
+    }
   });
 
   it('default transport refuses foreign hosts before any network call', async () => {

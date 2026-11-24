@@ -83,13 +83,13 @@ src/
 │  ├── id.ts          # ULID monotonic ID generator
 │  ├── migrate.ts     # Migration runner
 │  ├── testing.ts     # In-memory test DB helper
+│  ├── repos/         # Typed repository layer
+│  └── __tests__/     # DB and repo tests
 ├── garmin/           # Garmin Personal API client (server-only)
 │  ├── client.ts      # Token exchange, host allowlist, typed endpoints (Date in, Promise out)
 │  ├── types.ts       # Response types (weight in grams, durations in seconds)
 │  ├── index.ts       # getGarminClient(); reads GARMIN_CONNECT_API_KEY by name
 │  └── __tests__/     # Offline tests, stub fetch, no real key or health data
-│  ├── repos/         # Typed repository layer
-│  └── __tests__/     # DB and repo tests
 drizzle/             # Migration files (generated)
 docs/                # Architecture, API docs, decisions, UI mockup
 fixtures/            # Gitignored: personal Garmin exports
@@ -180,7 +180,7 @@ git commit --no-verify   # Skips all hooks
 - Dates are `Date` objects read as local calendar days (`formatDay()` → `YYYY-MM-DD`); methods are `async`
 - Host guard: HTTPS and `personal.connectapi.garmin.com` only, checked in the default transport and on every URL
 - `GarminApiError` carries status and path, never the response body or key
-- 22 offline tests
+- Offline tests with a stub fetch (no real key or health data)
 
 **Gotchas:**
 
