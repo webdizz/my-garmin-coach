@@ -12,3 +12,4 @@ coverage/
 .stryker-tmp/
 .stryker-cache/
 reports/
+graphify-out/

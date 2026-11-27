@@ -50,3 +50,6 @@ next-env.d.ts
 reports/
 .stryker-cache/
 .stryker-tmp/
+
+# graphify knowledge graph (generated, not source)
+/graphify-out/
