@@ -22,10 +22,10 @@ const customJestConfig = {
   // Directory keys aggregate all files under the path; glob keys would apply per file.
   coverageThreshold: {
     // Measures files outside the three path keys below (UI, app routes, proxy, etc.).
-    global: { statements: 51, branches: 37, functions: 53, lines: 53 },
-    './src/garmin/': { statements: 78, branches: 72, functions: 75, lines: 79 },
-    './src/db/': { statements: 85, branches: 82, functions: 75, lines: 84 },
-    './src/sync/': { statements: 74, branches: 62, functions: 70, lines: 78 },
+    global: { statements: 67, branches: 63, functions: 72, lines: 68 },
+    './src/garmin/': { statements: 87, branches: 81, functions: 82, lines: 88 },
+    './src/db/': { statements: 92, branches: 94, functions: 80, lines: 93 },
+    './src/sync/': { statements: 82, branches: 67, functions: 78, lines: 87 },
   },
   modulePathIgnorePatterns: ['<rootDir>/.stryker-tmp/'],
   testMatch: [

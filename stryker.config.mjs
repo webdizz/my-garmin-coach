@@ -6,10 +6,10 @@ const config = {
   testRunner: 'jest',
   jest: {
     projectType: 'custom',
-    configFile: 'jest.config.js',
+    configFile: 'jest.stryker.config.mjs',
     enableFindRelatedTests: true,
   },
-  coverageAnalysis: 'all',
+  coverageAnalysis: 'off',
   checkers: ['typescript'],
   tsconfigFile: 'tsconfig.json',
   mutate: [
@@ -20,7 +20,7 @@ const config = {
   ],
   reporters: ['clear-text', 'progress', 'html'],
   htmlReporter: { fileName: 'reports/mutation/index.html' },
-  thresholds: { high: 80, low: 60, break: null },
+  thresholds: { high: 80, low: 60, break: 74 },
   concurrency: 4,
   incremental: false,
   incrementalFile: '.stryker-cache/incremental.json',

@@ -17,7 +17,7 @@
     "prepare": "husky",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,css,json,md}\"",
-    "verify": "npm run lint && npm run typecheck && npm run arch && npm run test:ci",
+    "verify": "npm run lint && npm run typecheck && npm run arch && npm run test:ci && npm run mutation",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "auth:enroll": "tsx --env-file-if-exists=.env scripts/auth-enroll.ts"

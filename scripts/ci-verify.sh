@@ -24,4 +24,8 @@ echo "✅ Running tests with coverage..."
 npm run test:ci
 
 echo ""
+echo "🧬 Running mutation tests (enforced break threshold)..."
+npm run mutation
+
+echo ""
 echo "✨ All CI checks passed!"
