@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Pre-push hook: validates that all tests and build process pass
+# Ensures changes are deployable by CI/CD pipeline
+# Runs: build, full test suite with coverage, typecheck, and lint
+
+set -e
+
+echo "🚀 Running pre-push validation..."
+echo ""
+
+# Run the full verification suite (lint + typecheck + test with coverage)
+# This matches what the CI/CD pipeline will run
+echo "🔍 Running full verification suite (this may take a minute)..."
+npm run verify
+echo ""
+
+# Explicitly build to catch any build-time errors
+echo "🏗️  Building production bundle..."
+npm run build
+echo ""
+
+echo "✨ All validations passed! Ready to push."
