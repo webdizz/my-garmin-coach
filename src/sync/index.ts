@@ -5,7 +5,7 @@ import { getGarminClient } from '../garmin';
 import { createScheduler } from './scheduler';
 import { createSyncService, describeError, type SyncService } from './run';
 
-export { getSyncStatus } from './status';
+export { getSyncStatus, type SyncStatus } from './status';
 export { DEFAULT_DAYS, describeError, MAX_DAYS, type SyncService } from './run';
 
 /** Instrumentation and route handlers are bundled separately, so share the instance through globalThis. */

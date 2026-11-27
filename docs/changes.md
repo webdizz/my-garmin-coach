@@ -31,6 +31,23 @@ open the entry for the area you are touching.
 - `.stryker-tmp/`, `.stryker-cache/` and `reports/` are gitignored.
 - Floors are baselines, not the 80% target. Raise them as tests land.
 
+## GC-28 and GC-25: You screen (feeling, niggles, goal, slots, sync)
+
+**Added:**
+
+- Migration `0002_gc28_you_profile`: `daily_checkin` (one row per day), `niggle` (open until `resolvedOn`), `goal` (one active), `training_slot` (weekday 1-7, HH:MM)
+- `youProfileRepo` in `src/db/repos/you-profile.ts`: validates input, throws `ProfileInputError` with the field name only
+- `src/you/state.ts` loader (`getYouState`) and `/you` page with sections: Today, Niggles, Goal, Training slots, Data, Security, disclaimer
+- `POST /api/you` with actions `feeling`, `addNiggle`, `resolveNiggle`, `setGoal`. Guarded like `/api/sync` (session, cross-site origin, validation)
+- Bottom tab bar (`src/components/tab-nav.tsx`). Today and You are live, Plan, Trends and Coach are disabled until their tickets land
+
+**Gotchas:**
+
+- Not added in GC-28: `garmin_profile`, schedule settings and `garmin_key_status`. No data source yet (GC-10). The key row uses the existing login status.
+- Pull times on the screen come from GC-9 (UTC 09:30, 18:00, 23:30), shown in local time. The mockup's 06:30/12:00/21:00 are not used.
+- Client code must not import `src/db`. Feeling options are kept in `src/you/format.ts` and must match `FEELINGS` in `src/db/schema.ts`.
+- Auto-lock stays 5 minutes, shown as text on the screen. Changing it means editing `AUTO_LOCK_MINUTES`.
+
 ## GC-7: Login gate
 
 **Added:** passkey-only login (Face ID) with Better Auth 1.7 + `@better-auth/passkey`. `src/auth/` (config, enrollment tokens, gate rules, login status), `src/proxy.ts` (gate on every route), `/login`, `/enroll`, `/api/auth/[...all]`, `LockControls` (Lock now + 5 min idle lock), `npm run auth:enroll`. Auth tables live in `src/db/auth-schema.ts` (migration `0001`), separate from `settings`.

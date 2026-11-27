@@ -4,7 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef } from 'react';
 import { authClient } from '@/auth/client';
 
-const IDLE_MS = 5 * 60 * 1000;
+/** Auto-lock after this many idle minutes. Shown as text on the You screen, so keep them in sync. */
+export const AUTO_LOCK_MINUTES = 5;
+const IDLE_MS = AUTO_LOCK_MINUTES * 60 * 1000;
 /** Minimum gap between keep-alive calls that slide the server session forward. */
 const PING_MS = 30 * 1000;
 const ACTIVITY_EVENTS = ['pointerdown', 'keydown', 'scroll', 'touchstart'] as const;
