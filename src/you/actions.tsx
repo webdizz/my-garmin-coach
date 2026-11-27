@@ -166,3 +166,42 @@ export function RefreshNow() {
     </div>
   );
 }
+
+/** Saves the Garmin key expiry date (YYYY-MM-DD). Empty input clears it. */
+export function KeyExpiryForm({ current }: { current: string | null }) {
+  const { send, pending, error } = useYouAction();
+  const [value, setValue] = useState(current ?? '');
+  return (
+    <form
+      className="flex flex-col gap-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        send({ action: 'setKeyExpiry', expiresOn: value === '' ? null : value });
+      }}
+    >
+      <label className="text-[12px] text-[var(--color-muted)]">
+        Key expires on (copy it from Garmin Connect)
+        <input
+          type="date"
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+          }}
+          className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface-1)] p-2 text-[14px] text-[var(--color-text)]"
+        />
+      </label>
+      <button
+        type="submit"
+        disabled={pending}
+        className="self-start rounded-lg border border-[var(--color-line)] px-3 py-1.5 text-[13px] text-[var(--color-muted)]"
+      >
+        Save expiry
+      </button>
+      {error && (
+        <p role="alert" className="text-[13px] text-[var(--color-bad)]">
+          {error}
+        </p>
+      )}
+    </form>
+  );
+}

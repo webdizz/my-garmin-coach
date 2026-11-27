@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { AddNiggle, RefreshNow, ResolveNiggle } from '@/you/actions';
+import { AddNiggle, KeyExpiryForm, RefreshNow, ResolveNiggle } from '@/you/actions';
 
 const refresh = jest.fn();
 jest.mock('next/navigation', () => ({
@@ -8,6 +8,9 @@ jest.mock('next/navigation', () => ({
 }));
 
 const fetchMock = jest.fn();
+
+/** Reads the JSON body of the nth fetch call. */
+const bodyOf = (call: number): unknown => JSON.parse(String(fetchMock.mock.calls[call][1].body));
 
 /** jsdom has no Response global; the actions only read `ok` and `status`. */
 const res = (status: number) => ({ ok: status >= 200 && status < 300, status });
@@ -66,5 +69,37 @@ describe('you actions', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Refresh now' }));
     });
     expect(screen.getByRole('alert')).toHaveTextContent('Could not start a refresh');
+  });
+
+  it('KeyExpiryForm saves the date, and sends null when cleared', async () => {
+    fetchMock.mockResolvedValue(res(201));
+    render(<KeyExpiryForm current="2030-06-01" />);
+    const input = screen.getByLabelText(/Key expires on/);
+    expect(input).toHaveValue('2030-06-01');
+    fireEvent.change(input, { target: { value: '2030-07-01' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Save expiry' }));
+    });
+    expect(bodyOf(0)).toEqual({
+      action: 'setKeyExpiry',
+      expiresOn: '2030-07-01',
+    });
+    fireEvent.change(input, { target: { value: '' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Save expiry' }));
+    });
+    expect(bodyOf(1)).toEqual({
+      action: 'setKeyExpiry',
+      expiresOn: null,
+    });
+  });
+
+  it('KeyExpiryForm shows an error when the server refuses', async () => {
+    fetchMock.mockResolvedValue(res(400));
+    render(<KeyExpiryForm current={null} />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Save expiry' }));
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not save');
   });
 });

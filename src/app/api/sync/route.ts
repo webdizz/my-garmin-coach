@@ -1,6 +1,9 @@
 import { DEFAULT_DAYS, describeError, getSyncService, getSyncStatus, MAX_DAYS } from '@/sync';
 import { requireSession } from '@/auth';
 import { getDb } from '@/db';
+import { settingsRepo } from '@/db/repos/settings';
+import { keyExpiry } from '@/you/key-expiry';
+import { localDay } from '@/you/state';
 
 async function status() {
   const [db, service] = await Promise.all([getDb(), getSyncService()]);
@@ -41,6 +44,14 @@ export async function POST(request: Request) {
       { error: `days must be an integer from 1 to ${MAX_DAYS}` },
       { status: 400 }
     );
+  }
+  // An expired key cannot pull. Refuse before starting a run that would only fail.
+  const db = await getDb();
+  if (
+    keyExpiry(await settingsRepo(db).get('garmin.keyExpiresOn'), localDay(new Date())).state ===
+    'expired'
+  ) {
+    return Response.json({ error: 'keyExpired' }, { status: 409 });
   }
   const service = await getSyncService();
   if (service.isRunning()) return Response.json(await status(), { status: 409 });

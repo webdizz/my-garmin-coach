@@ -4,8 +4,8 @@ import { getLoginStatus } from '@/auth/status';
 import { getDb } from '@/db';
 import { getSyncService } from '@/sync';
 import { AUTO_LOCK_MINUTES, LockControls } from '@/components/lock-controls';
-import { AddNiggle, FeelingPills, RefreshNow, ResolveNiggle } from '@/you/actions';
-import { formatLocal, WEEKDAYS } from '@/you/format';
+import { AddNiggle, FeelingPills, KeyExpiryForm, RefreshNow, ResolveNiggle } from '@/you/actions';
+import { formatLocal, keyExpiryLabel, WEEKDAYS } from '@/you/format';
 import { getYouState } from '@/you/state';
 
 export const metadata = { title: 'You · Garmin Coach' };
@@ -117,7 +117,11 @@ async function YouContent() {
           <p className="text-[12px] text-[var(--color-muted)]">
             Garmin key{' '}
             {state.garminKey === 'configured' ? 'configured' : 'missing (set it on the server)'}
+            {state.garminKey === 'configured' && `, ${keyExpiryLabel(state.keyExpiry)}`}
           </p>
+          <KeyExpiryForm
+            current={state.keyExpiry.state === 'unknown' ? null : state.keyExpiry.expiresOn}
+          />
         </div>
       </Section>
 

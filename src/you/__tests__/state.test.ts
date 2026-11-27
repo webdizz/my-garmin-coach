@@ -2,6 +2,7 @@
 import { createTestDb } from '@/db/testing';
 import { youProfileRepo } from '@/db/repos/you-profile';
 import { syncRunRepo } from '@/db/repos/sync-run';
+import { settingsRepo } from '@/db/repos/settings';
 import { localDay, getYouState } from '../state';
 
 jest.mock('server-only', () => ({}));
@@ -71,5 +72,21 @@ describe('getYouState', () => {
     await youProfileRepo(db).setFeeling('2030-03-09', 'rough');
     const state = await getYouState(db, { running: false, garminKey: 'configured', now: NOON });
     expect(state.feeling).toBeNull();
+  });
+
+  it('reads the Garmin key expiry from settings and classifies it against today', async () => {
+    const db = await createTestDb();
+    await settingsRepo(db).set('garmin.keyExpiresOn', '2030-03-15');
+    const state = await getYouState(db, { running: false, garminKey: 'configured', now: NOON });
+    expect(state.keyExpiry).toEqual({ state: 'expiring', expiresOn: '2030-03-15', daysLeft: 5 });
+  });
+
+  it('reports the key expiry as unknown when no date is set', async () => {
+    const state = await getYouState(await createTestDb(), {
+      running: false,
+      garminKey: 'configured',
+      now: NOON,
+    });
+    expect(state.keyExpiry).toEqual({ state: 'unknown' });
   });
 });

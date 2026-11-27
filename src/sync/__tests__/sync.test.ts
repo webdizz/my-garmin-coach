@@ -45,6 +45,12 @@ describe('slots', () => {
     expect(previousSlot(NOW)).toEqual(utc(10, 9, 30));
     expect(previousSlot(utc(10, 8, 0))).toEqual(utc(9, 23, 30));
   });
+
+  it('is strict for next and inclusive for previous when now is exactly a slot', () => {
+    const utc = (d: number, h: number, m: number) => new Date(Date.UTC(2030, 0, d, h, m));
+    expect(nextSlot(utc(10, 18, 0))).toEqual(utc(10, 23, 30));
+    expect(previousSlot(utc(10, 18, 0))).toEqual(utc(10, 18, 0));
+  });
 });
 
 describe('withBackoff', () => {
@@ -71,6 +77,73 @@ describe('withBackoff', () => {
       }, fast)
     ).rejects.toThrow();
     expect(n).toBe(1);
+  });
+
+  it('retries a 500 and gives up after exactly `retries` retries', async () => {
+    let n = 0;
+    await expect(
+      withBackoff(async () => {
+        n++;
+        throw new GarminApiError(500, '/x');
+      }, fast)
+    ).rejects.toThrow();
+    expect(n).toBe(3);
+  });
+
+  it('does not retry a 499 but retries a 429 and a 503', async () => {
+    const calls = async (status: number) => {
+      let n = 0;
+      await expect(
+        withBackoff(async () => {
+          n++;
+          throw new GarminApiError(status, '/x');
+        }, fast)
+      ).rejects.toThrow();
+      return n;
+    };
+    expect(await calls(499)).toBe(1);
+    expect(await calls(429)).toBe(3);
+    expect(await calls(503)).toBe(3);
+  });
+
+  it('retries a request timeout and does not retry other plain errors', async () => {
+    let n = 0;
+    const timeout = new Error('timed out');
+    timeout.name = 'TimeoutError';
+    await expect(
+      withBackoff(async () => {
+        n++;
+        throw timeout;
+      }, fast)
+    ).rejects.toBe(timeout);
+    expect(n).toBe(3);
+
+    let m = 0;
+    await expect(
+      withBackoff(async () => {
+        m++;
+        throw new Error('boom');
+      }, fast)
+    ).rejects.toThrow('boom');
+    expect(m).toBe(1);
+  });
+
+  it('uses Retry-After in place of the computed delay, capped at maxMs', async () => {
+    const run = async (hint: number | undefined) => {
+      const delays: number[] = [];
+      let n = 0;
+      await withBackoff(
+        async () => {
+          if (++n === 1) throw new GarminApiError(429, '/x', hint);
+          return 'ok';
+        },
+        { baseMs: 10, maxMs: 15, sleep: async (ms) => void delays.push(ms) }
+      );
+      return delays;
+    };
+    expect(await run(7_000)).toEqual([15]);
+    expect(await run(5)).toEqual([5]);
+    expect(await run(undefined)).toEqual([10]);
   });
 });
 

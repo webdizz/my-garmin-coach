@@ -4,6 +4,8 @@ import { youProfileRepo } from '../db/repos/you-profile';
 import type { Feeling } from '../db/repos/you-profile';
 import { getSyncStatus, type SyncStatus } from '../sync';
 import type { NiggleRow } from '../db/schema';
+import { settingsRepo } from '../db/repos/settings';
+import { keyExpiry, type KeyExpiry } from './key-expiry';
 
 /** Everything the You screen renders. Plain, serialisable data: dates are ISO strings. */
 export interface YouState {
@@ -20,6 +22,8 @@ export interface YouState {
   slots: { id: string; weekday: number; start: string; end: string; kind: string }[];
   sync: { state: SyncStatus['state']; lastSuccessAt: string | null; nextPullAt: string };
   garminKey: 'configured' | 'missing';
+  /** Expiry of the Garmin key, from the date the user entered. `unknown` until it is set. */
+  keyExpiry: KeyExpiry;
 }
 
 /** Local calendar day as YYYY-MM-DD, using the server's local timezone. */
@@ -48,12 +52,13 @@ export async function getYouState(
   const now = opts.now ?? new Date();
   const today = localDay(now);
   const repo = youProfileRepo(db);
-  const [checkin, niggles, goal, slots, sync] = await Promise.all([
+  const [checkin, niggles, goal, slots, sync, expiresOn] = await Promise.all([
     repo.feelingOn(today),
     repo.activeNiggles(),
     repo.activeGoal(),
     repo.activeSlots(),
     getSyncStatus(db, { running: opts.running, now }),
+    settingsRepo(db).get('garmin.keyExpiresOn'),
   ]);
   return {
     today,
@@ -69,5 +74,6 @@ export async function getYouState(
     })),
     sync: { state: sync.state, lastSuccessAt: sync.lastSuccessAt, nextPullAt: sync.nextPullAt },
     garminKey: opts.garminKey,
+    keyExpiry: keyExpiry(expiresOn, today),
   };
 }

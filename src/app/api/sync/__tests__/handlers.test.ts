@@ -1,4 +1,6 @@
 /** @jest-environment node */
+import { createTestDb } from '@/db/testing';
+import { settingsRepo } from '@/db/repos/settings';
 const denied = jest.fn<Promise<Response | null>, [Request]>();
 const service = {
   isRunning: jest.fn(() => false),
@@ -7,7 +9,8 @@ const service = {
 
 jest.mock('server-only', () => ({}));
 jest.mock('@/auth', () => ({ requireSession: (r: Request) => denied(r) }));
-jest.mock('@/db', () => ({ getDb: jest.fn(async () => ({})) }));
+const dbRef: { db?: unknown } = {};
+jest.mock('@/db', () => ({ getDb: jest.fn(async () => dbRef.db) }));
 jest.mock('@/sync', () => ({
   DEFAULT_DAYS: 3,
   MAX_DAYS: 365,
@@ -25,6 +28,10 @@ const post = (body?: unknown, headers: Record<string, string> = {}) =>
   });
 
 describe('/api/sync handlers', () => {
+  beforeEach(async () => {
+    dbRef.db = await createTestDb();
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     denied.mockResolvedValue(null);
@@ -88,5 +95,22 @@ describe('/api/sync handlers', () => {
     const { POST } = await import('../route');
     expect((await POST(post())).status).toBe(409);
     expect(service.run).not.toHaveBeenCalled();
+  });
+
+  it('POST refuses with 409 keyExpired once the Garmin key date has passed', async () => {
+    await settingsRepo(dbRef.db as Awaited<ReturnType<typeof createTestDb>>).set(
+      'garmin.keyExpiresOn',
+      '2000-01-01'
+    );
+    const { POST } = await import('../route');
+    const res = await POST(post({ days: 3 }));
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ error: 'keyExpired' });
+    expect(service.run).not.toHaveBeenCalled();
+  });
+
+  it('POST still runs when the key date is in the future or unknown', async () => {
+    const { POST } = await import('../route');
+    expect((await POST(post({ days: 3 }))).status).toBe(202);
   });
 });

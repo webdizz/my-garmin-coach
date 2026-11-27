@@ -6,6 +6,8 @@ import { settings } from '../schema';
 export interface SettingsMap {
   units: 'metric' | 'imperial';
   'sync.hour': number;
+  /** Garmin personal API key expiry (YYYY-MM-DD), typed in from the Garmin web UI. */
+  'garmin.keyExpiresOn': string;
 }
 
 export type SettingKey = keyof SettingsMap;

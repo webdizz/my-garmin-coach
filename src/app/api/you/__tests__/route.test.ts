@@ -91,4 +91,18 @@ describe('/api/you POST', () => {
       (await POST(post({ action: 'setGoal', event: 'Half', date: '2030-13-01' }))).status
     ).toBe(400);
   });
+
+  it('saves and clears the Garmin key expiry date, and rejects a bad one', async () => {
+    const { settingsRepo } = await import('@/db/repos/settings');
+    const settings = settingsRepo(requireDb());
+    expect((await POST(post({ action: 'setKeyExpiry', expiresOn: '2030-06-01' }))).status).toBe(
+      201
+    );
+    expect(await settings.get('garmin.keyExpiresOn')).toBe('2030-06-01');
+    expect((await POST(post({ action: 'setKeyExpiry', expiresOn: null }))).status).toBe(201);
+    expect(await settings.get('garmin.keyExpiresOn')).toBeUndefined();
+    const bad = await POST(post({ action: 'setKeyExpiry', expiresOn: '2030-02-30' }));
+    expect(bad.status).toBe(400);
+    expect(await settings.get('garmin.keyExpiresOn')).toBeUndefined();
+  });
 });

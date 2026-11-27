@@ -24,6 +24,7 @@ export function nextSlot(now: Date): Date {
     const hit = slotsOn(dayOffset(now, offset)).find((s) => s.getTime() > now.getTime());
     if (hit) return hit;
   }
+  // Stryker disable next-line StringLiteral: unreachable, two days always cover a slot
   throw new Error('unreachable: tomorrow always has a slot');
 }
 
@@ -35,5 +36,6 @@ export function previousSlot(now: Date): Date {
       .find((s) => s.getTime() <= now.getTime());
     if (hit) return hit;
   }
+  // Stryker disable next-line StringLiteral: unreachable, two days always cover a slot
   throw new Error('unreachable: yesterday always has a slot');
 }

@@ -31,6 +31,22 @@ open the entry for the area you are touching.
 - `.stryker-tmp/`, `.stryker-cache/` and `reports/` are gitignored.
 - Floors are baselines, not the 80% target. Raise them as tests land.
 
+## GC-10: Garmin key expiry banners
+
+**Added:**
+
+- `src/you/key-expiry.ts`: `keyExpiry(expiresOn, today)` classifies the key as `unknown`, `ok`, `expiring` (≤ 14 days, `KEY_EXPIRY_WARN_DAYS`) or `expired`. A key is still valid on its expiry day. `parseKeyExpiry` validates input (`null` clears it).
+- The expiry date is stored in `settings` as `garmin.keyExpiresOn` (YYYY-MM-DD). No migration.
+- You screen: the Garmin key row shows days left and a date field (`KeyExpiryForm`, action `setKeyExpiry` on `POST /api/you`).
+- Today: `KeyBanner` (`src/components/key-banner.tsx`) shows the amber expiring warning, or the rose expired alert with renewal steps. Today is now request-time (`connection()`), so the banner is never frozen at build time.
+- `POST /api/sync` returns 409 `{error: "keyExpired"}` once the key date has passed, so no pull runs with a dead key.
+
+**Gotchas:**
+
+- Garmin's API does not report key expiry. The FAQ says the key is created with a 30, 90, 180 or 365 day lifetime, and Garmin emails about a week before. The 24 h Bearer token is not the key's lifetime, so the date has to be typed in from Garmin Connect (`connect.garmin.com/app/settings/personalApiToken`).
+- Expiry is a manual date, so a key revoked early still shows as valid. A 401 from the token exchange is the only signal for that, and it is not handled by this ticket.
+- The 409 guard compares against local today, using the same `localDay` as the You screen.
+
 ## GC-28 and GC-25: You screen (feeling, niggles, goal, slots, sync)
 
 **Added:**
@@ -43,7 +59,7 @@ open the entry for the area you are touching.
 
 **Gotchas:**
 
-- Not added in GC-28: `garmin_profile`, schedule settings and `garmin_key_status`. No data source yet (GC-10). The key row uses the existing login status.
+- Not added in GC-28: `garmin_profile`, schedule settings and `garmin_key_status`. The key expiry came in GC-10, stored as a setting rather than a table.
 - Pull times on the screen come from GC-9 (UTC 09:30, 18:00, 23:30), shown in local time. The mockup's 06:30/12:00/21:00 are not used.
 - Client code must not import `src/db`. Feeling options are kept in `src/you/format.ts` and must match `FEELINGS` in `src/db/schema.ts`.
 - Auto-lock stays 5 minutes, shown as text on the screen. Changing it means editing `AUTO_LOCK_MINUTES`.

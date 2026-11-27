@@ -1,6 +1,8 @@
 import { requireSession } from '@/auth';
 import { getDb } from '@/db';
+import { settingsRepo } from '@/db/repos/settings';
 import { youProfileRepo, ProfileInputError, parseFeeling } from '@/db/repos/you-profile';
+import { parseKeyExpiry } from '@/you/key-expiry';
 import { localDay } from '@/you/state';
 
 /** True when Origin names another site, or is unparseable (e.g. `Origin: null`). Same rule as /api/sync. */
@@ -56,6 +58,13 @@ export async function POST(request: Request) {
       case 'setGoal':
         await repo.setGoal({ event: input.event, date: input.date, target: input.target });
         return Response.json({ ok: true }, { status: 201 });
+      case 'setKeyExpiry': {
+        const expiresOn = parseKeyExpiry(input.expiresOn);
+        const settings = settingsRepo(await getDb());
+        if (expiresOn === null) await settings.delete('garmin.keyExpiresOn');
+        else await settings.set('garmin.keyExpiresOn', expiresOn);
+        return Response.json({ ok: true }, { status: 201 });
+      }
       default:
         return bad('unknown action');
     }
