@@ -1,7 +1,6 @@
 import { DEFAULT_DAYS, describeError, getSyncService, getSyncStatus, MAX_DAYS } from '@/sync';
+import { requireSession } from '@/auth';
 import { getDb } from '@/db';
-
-export const dynamic = 'force-dynamic';
 
 async function status() {
   const [db, service] = await Promise.all([getDb(), getSyncService()]);
@@ -9,7 +8,9 @@ async function status() {
 }
 
 /** Sync state for the SYNCED banner: last pull, next pull, running/error. */
-export async function GET() {
+export async function GET(request: Request) {
+  const denied = await requireSession(request);
+  if (denied) return denied;
   return Response.json(await status());
 }
 
@@ -25,7 +26,9 @@ function isCrossSite(origin: string | null, host: string | null): boolean {
 
 /** Manual refresh. Returns 202 at once; poll GET for progress. 409 when a pull is already running. */
 export async function POST(request: Request) {
-  // Single-user app with no login gate yet: refuse cross-site form posts.
+  const denied = await requireSession(request);
+  if (denied) return denied;
+  // Route sits behind proxy.ts and requireSession. This also refuses cross-site form posts.
   if (isCrossSite(request.headers.get('origin'), request.headers.get('host'))) {
     return Response.json({ error: 'forbidden' }, { status: 403 });
   }
