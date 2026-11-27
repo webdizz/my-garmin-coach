@@ -70,6 +70,7 @@ npm run verify          # Full suite: lint + typecheck + test:ci
 # Database
 npm run db:generate     # Generate Drizzle migrations
 npm run db:migrate      # Apply migrations to the database
+npm run auth:enroll     # Mint a one-time passkey enrollment link (reads APP_ORIGIN, DATABASE_URL)
 ```
 
 ## Project Structure
@@ -90,6 +91,8 @@ src/
 │  ├── types.ts       # Response types (weight in grams, durations in seconds)
 │  ├── index.ts       # getGarminClient(); reads GARMIN_CONNECT_API_KEY by name
 │  └── __tests__/     # Offline tests, stub fetch, no real key or health data
+├── auth/             # Passkey login (Better Auth): config, enroll, gate, status
+├── proxy.ts          # Gate in front of all routes
 ├── sync/             # Sync job (GC-9): pull specs, backoff, run service, scheduler, status
 drizzle/             # Migration files (generated)
 docs/                # Architecture, API docs, decisions, UI mockup

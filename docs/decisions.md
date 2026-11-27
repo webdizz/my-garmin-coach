@@ -59,7 +59,7 @@ Candidates under evaluation:
   authentication gate. The Garmin key stays on the server and is never sent to the browser.
 - **Shape (mockup):** unlock with Face ID (passkey) as the default, password as fallback. Auto-lock after
   5 min. Banners for Garmin key expiring (≤ 14 days) and expired.
-- **Status:** login screen accepted. Passkey + password fallback is the proposed method, to be confirmed.
+- **Status (GC-7, implemented):** passkey only (Face ID), no password. Better Auth + `@better-auth/passkey` on Drizzle. Recovery and new devices use a CLI-minted one-time enrollment link (`npm run auth:enroll`). Superseded text follows: passkey + password fallback is the proposed method, to be confirmed.
 
 ## D8. Coach uses one thread per plan week
 
@@ -104,7 +104,7 @@ Candidates under evaluation:
 3. Charting library: ECharts, Recharts or uPlot?
 4. Is the Personal API sufficient for body composition and FIT parsing?
 5. Which LLM provider(s), and what data-sharing policy is acceptable for health data?
-6. Login method: passkey + password fallback (D7), or password only?
+6. ~~Login method~~ Resolved in GC-7: passkey only, CLI enrollment for recovery.
 7. Readiness score on Today: use Garmin's own training readiness, or compute one from HRV, sleep and RHR?
 8. Weather source and forecast horizon for the plan (the mockup assumes a 6-hourly re-check).
 9. Monday summary: generated automatically at 07:00, or on demand?

@@ -3,6 +3,25 @@
 Per-ticket log of what landed, with gotchas. Newest first. Not required reading for every task:
 open the entry for the area you are touching.
 
+## GC-7: Login gate
+
+**Added:** passkey-only login (Face ID) with Better Auth 1.7 + `@better-auth/passkey`. `src/auth/` (config, enrollment tokens, gate rules, login status), `src/proxy.ts` (gate on every route), `/login`, `/enroll`, `/api/auth/[...all]`, `LockControls` (Lock now + 5 min idle lock), `npm run auth:enroll`. Auth tables live in `src/db/auth-schema.ts` (migration `0001`), separate from `settings`.
+
+**Setup:** set `BETTER_AUTH_SECRET` (32+ random chars, `openssl rand -base64 32`) in `.env`. `APP_ORIGIN` defaults to `http://localhost:3344`. First device: run `npm run auth:enroll`, open the printed link, approve Face ID.
+
+**Gotchas**
+
+- The passkey is bound to the RP ID (hostname). `localhost` passkeys do not work on another hostname; change `APP_ORIGIN` and re-enroll. Browsers treat `http://localhost` as secure, so no certificate is needed in dev.
+- No sign-up or password routes. The only way to add a credential is an enrollment link (hash stored, 15 min, single use) or an existing session.
+- Enrollment token is kept out of the page load: it sits in the URL fragment (`/enroll#token`), which browsers never send to the server. The passkey client then sends it as a query string (`?context=<token>`) to `/api/auth/passkey/generate-register-options`, so it does appear in that request URL. Any access log or reverse-proxy log that records query strings would hold it. Limits: single use, 15 min expiry, hash-only storage. If a reverse proxy is added, exclude query strings from its access log.
+- Passkey endpoints are rate-limited (20 requests per 60 s per client, `PASSKEY_RATE_LIMIT`). Better Auth enables its limiter only in production by default, so it is set explicitly in `config.ts`. The limiter keys on client IP; behind a proxy, configure `advanced.ipAddress` or all clients share one bucket.
+- Expired enrollment tokens are deleted each time `npm run auth:enroll` runs.
+- The dev script pins port 3344. `APP_ORIGIN` must include the port actually served: the origin check uses the full origin, so a different port fails. The RP ID is the hostname only. (300 s) slid forward by activity. `cookieCache` is off so Lock now revokes at once.
+- `proxy.ts` fails closed. Route handlers must still call `requireSession(request)` (see `/api/sync`).
+- `cacheComponents` is on: no `export const dynamic`; request-time reads go inside `<Suspense>`.
+- Jest needs the ESM-only auth packages in `transformIgnorePatterns` (`jest.config.js`).
+- Not tested here: a real Face ID ceremony on a device. Verified by unit tests and a live gate check only.
+
 ## GC-9: Sync job (scheduled pulls + manual refresh)
 
 **Added:**
