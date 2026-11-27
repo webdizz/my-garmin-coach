@@ -15,6 +15,13 @@
       "when": 1795714581012,
       "tag": "0001_whole_bucky",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1795793072803,
+      "tag": "0002_gc28_you_profile",
+      "breakpoints": true
     }
   ]
 }
