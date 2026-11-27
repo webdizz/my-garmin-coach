@@ -9,3 +9,6 @@ build/
 .env.local
 .env.*.local
 coverage/
+.stryker-tmp/
+.stryker-cache/
+reports/

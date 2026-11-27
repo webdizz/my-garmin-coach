@@ -3,6 +3,16 @@
 Per-ticket log of what landed, with gotchas. Newest first. Not required reading for every task:
 open the entry for the area you are touching.
 
+## GC-36: Coverage floors and on-demand mutation testing
+
+**Added:** per-directory Jest coverage floors (`src/garmin`, `src/db`, `src/sync`, plus a global floor for the rest) set at the measured baseline, and Stryker 10 (`npm run mutation`, config in `stryker.config.mjs`) targeting the Garmin client and sync backoff/slots. `.graphifyignore` keeps health data and generated output out of the knowledge graph.
+
+**Gotchas**
+
+- Mutation testing is not part of `verify`. Stryker copies the repo into `.stryker-tmp/`; ESLint, Prettier and Jest ignore that folder. Without the ignores, lint reported about 690 false errors from the sandbox copies.
+- `.stryker-tmp/`, `.stryker-cache/` and `reports/` are gitignored.
+- Floors are baselines, not the 80% target. Raise them as tests land.
+
 ## GC-7: Login gate
 
 **Added:** passkey-only login (Face ID) with Better Auth 1.7 + `@better-auth/passkey`. `src/auth/` (config, enrollment tokens, gate rules, login status), `src/proxy.ts` (gate on every route), `/login`, `/enroll`, `/api/auth/[...all]`, `LockControls` (Lock now + 5 min idle lock), `npm run auth:enroll`. Auth tables live in `src/db/auth-schema.ts` (migration `0001`), separate from `settings`.

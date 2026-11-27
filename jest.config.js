@@ -18,6 +18,16 @@ const customJestConfig = {
     '!src/**/*.stories.{js,jsx,ts,tsx}',
     '!src/**/__tests__/**',
   ],
+  // Floors start at the measured baseline (rounded down) and ratchet up as tests land.
+  // Directory keys aggregate all files under the path; glob keys would apply per file.
+  coverageThreshold: {
+    // Measures files outside the three path keys below (UI, app routes, proxy, etc.).
+    global: { statements: 51, branches: 37, functions: 53, lines: 53 },
+    './src/garmin/': { statements: 78, branches: 72, functions: 75, lines: 79 },
+    './src/db/': { statements: 85, branches: 82, functions: 75, lines: 84 },
+    './src/sync/': { statements: 74, branches: 62, functions: 70, lines: 78 },
+  },
+  modulePathIgnorePatterns: ['<rootDir>/.stryker-tmp/'],
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
     '<rootDir>/src/**/*.{spec,test}.{js,jsx,ts,tsx}',

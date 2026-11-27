@@ -1,0 +1,17 @@
+# Personal health data: never index into the graph
+fixtures/
+data/
+.env*
+*.db
+*.db-wal
+*.db-shm
+
+# Generated / vendored
+node_modules/
+.next/
+coverage/
+.swc/
+.unipi/
+drizzle/meta/
+*.tsbuildinfo
+package-lock.json

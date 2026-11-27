@@ -131,6 +131,8 @@ const eslintConfig = defineConfig([
     // Generated output:
     'coverage/**',
     'graphify-out/**',
+    '.stryker-tmp/**',
+    'reports/**',
     'drizzle/**',
   ]),
 ]);

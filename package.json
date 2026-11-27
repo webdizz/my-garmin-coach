@@ -12,6 +12,7 @@
     "test": "jest --watch",
     "test:ci": "jest --ci",
     "test:coverage": "jest --coverage --ci",
+    "mutation": "stryker run",
     "test:pre-commit": "jest --bail --passWithNoTests",
     "prepare": "husky",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css,json,md}\"",
@@ -34,6 +35,9 @@
     "ulid": "^3.0.2"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "^10.1.1",
+    "@stryker-mutator/jest-runner": "^10.1.1",
+    "@stryker-mutator/typescript-checker": "^10.1.1",
     "@tailwindcss/turbopack": "4.3.3",
     "@testing-library/jest-dom": "^8.0.0",
     "@testing-library/react": "^16.3.3",
