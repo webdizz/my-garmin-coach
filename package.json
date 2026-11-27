@@ -50,7 +50,7 @@
     "@types/react-dom": "^19",
     "dependency-cruiser": "^18.9.0",
     "drizzle-kit": "^0.31.11",
-    "eslint": "^9",
+    "eslint": "^10",
     "eslint-config-next": "16.4.6",
     "eslint-plugin-jest": "^29.17.2",
     "eslint-plugin-security": "^4.2.1",
