@@ -2,7 +2,7 @@
 import { createTestDb } from '../../db/testing';
 import { rawJsonRepo } from '../../db/repos/raw-json';
 import { syncRunRepo } from '../../db/repos/sync-run';
-import { GarminApiError, type GarminClient } from '../../garmin/client';
+import { GarminApiError, GarminKeyInvalidError, type GarminClient } from '../../garmin/client';
 import { withBackoff } from '../backoff';
 import { createScheduler } from '../scheduler';
 import { createSyncService } from '../run';
@@ -320,5 +320,50 @@ describe('scheduler', () => {
     });
     await s.start();
     expect(run).not.toHaveBeenCalled();
+  });
+
+  it('stops at once on a rejected key, records keyInvalid and does not retry', async () => {
+    const db = await createTestDb();
+    const dailySummary = jest.fn();
+    const sleepRange = jest.fn(async () => {
+      throw new GarminKeyInvalidError('/token');
+    });
+    const out = await createSyncService({
+      db,
+      client: fakeClient({ sleepRange, dailySummary }),
+      now: () => NOW,
+      retry: fast,
+    }).run('schedule');
+    expect(out?.status).toBe('error');
+    expect(out?.errorCode).toBe('keyInvalid');
+    expect(out?.error).toBe('Garmin rejected the API key (401)');
+    expect(sleepRange).toHaveBeenCalledTimes(1);
+    expect(dailySummary).not.toHaveBeenCalled();
+    expect((await syncRunRepo(db).latest())?.errorCode).toBe('keyInvalid');
+  });
+
+  it('skips a slot fire when shouldRun says no, but still runs the startup catch-up', async () => {
+    const run = jest.fn(async () => {});
+    const shouldRun = jest.fn(async () => false);
+    let fire: (() => void) | undefined;
+    const s = createScheduler({
+      run,
+      shouldRun,
+      lastSuccessAt: async () => undefined,
+      log: () => {},
+      now: () => NOW,
+      setTimer: (fn) => {
+        fire = fn;
+        return 0;
+      },
+      clearTimer: () => {},
+    });
+    await s.start();
+    expect(run).toHaveBeenCalledTimes(1); // catch-up is not gated
+    fire?.();
+    await new Promise((r) => setImmediate(r));
+    expect(shouldRun).toHaveBeenCalledTimes(1);
+    expect(run).toHaveBeenCalledTimes(1); // the slot fire was skipped
+    s.stop();
   });
 });

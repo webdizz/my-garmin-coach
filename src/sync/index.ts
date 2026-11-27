@@ -3,6 +3,7 @@ import { getDb } from '../db';
 import { syncRunRepo } from '../db/repos/sync-run';
 import { getGarminClient } from '../garmin';
 import { createScheduler } from './scheduler';
+import { keyBackoffActive } from './key-backoff';
 import { createSyncService, describeError, type SyncService } from './run';
 
 export { getSyncStatus, type SyncStatus } from './status';
@@ -48,6 +49,12 @@ export async function startSyncScheduler(): Promise<void> {
           );
       },
       lastSuccessAt: async () => (await runs.lastSuccess())?.finishedAt ?? undefined,
+      // Garmin rejected the key recently: stop hammering it on slot fires. Manual pulls are not gated.
+      shouldRun: async (now) => {
+        const active = keyBackoffActive(await runs.keyInvalidStreak(), now);
+        if (active) console.info('[sync] scheduled pull skipped: Garmin key rejected, backing off');
+        return !active;
+      },
       onError: (err) => {
         console.error('[sync] scheduled pull failed:', describeError(err));
       },

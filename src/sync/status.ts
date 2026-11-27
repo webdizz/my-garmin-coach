@@ -13,6 +13,8 @@ export interface SyncStatus {
   } | null;
   lastSuccessAt: string | null;
   nextPullAt: string;
+  /** Garmin rejected the key on the last `count` runs in a row. `count` 0 = not rejected. */
+  keyInvalid: { count: number; lastAt: string | null };
 }
 
 export async function getSyncStatus(
@@ -20,7 +22,11 @@ export async function getSyncStatus(
   opts: { running: boolean; now?: Date }
 ): Promise<SyncStatus> {
   const runs = syncRunRepo(db);
-  const [latest, success] = await Promise.all([runs.latest(), runs.lastSuccess()]);
+  const [latest, success, streak] = await Promise.all([
+    runs.latest(),
+    runs.lastSuccess(),
+    runs.keyInvalidStreak(),
+  ]);
   const state = opts.running
     ? 'running'
     : !latest
@@ -40,5 +46,6 @@ export async function getSyncStatus(
       : null,
     lastSuccessAt: success?.finishedAt?.toISOString() ?? null,
     nextPullAt: nextSlot(opts.now ?? new Date()).toISOString(),
+    keyInvalid: { count: streak.count, lastAt: streak.lastAt?.toISOString() ?? null },
   };
 }

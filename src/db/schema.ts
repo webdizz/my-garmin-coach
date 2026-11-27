@@ -32,6 +32,8 @@ export const rawJson = sqliteTable(
 
 export const SYNC_TRIGGERS = ['manual', 'schedule'] as const;
 export const SYNC_STATUSES = ['running', 'success', 'error'] as const;
+/** Machine-readable failure cause. Null for generic errors (see `error`). */
+export const SYNC_ERROR_CODES = ['keyInvalid'] as const;
 
 export const syncRun = sqliteTable(
   'sync_run',
@@ -42,6 +44,7 @@ export const syncRun = sqliteTable(
     startedAt: nowMs(),
     finishedAt: integer({ mode: 'timestamp_ms' }),
     error: text(),
+    errorCode: text({ enum: SYNC_ERROR_CODES }),
   },
   (t) => [index('sync_run_started_idx').on(t.startedAt)]
 );

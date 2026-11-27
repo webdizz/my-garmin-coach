@@ -5,6 +5,11 @@ export interface SchedulerOptions {
   run: () => Promise<unknown>;
   /** When the last successful pull finished, if ever. */
   lastSuccessAt: () => Promise<Date | undefined>;
+  /**
+   * Checked on each slot fire only (not the startup catch-up). `false` skips that fire.
+   * A throw is reported to `onError` and the pull still runs: a broken gate must not stop pulls.
+   */
+  shouldRun?: (now: Date) => Promise<boolean>;
   now?: () => Date;
   onError?: (err: unknown) => void;
   setTimer?: (fn: () => void, ms: number) => unknown;
@@ -58,8 +63,17 @@ export function createScheduler(options: SchedulerOptions): Scheduler {
     log(`next scheduled pull at ${slot.toISOString()}`);
     const delay = Math.max(0, slot.getTime() - now().getTime());
     timer = setTimer(() => {
-      void fire().finally(arm);
+      void fireSlot().finally(arm);
     }, delay);
+  };
+
+  const fireSlot = async () => {
+    try {
+      if (options.shouldRun && !(await options.shouldRun(now()))) return;
+    } catch (err) {
+      onError(err);
+    }
+    await fire();
   };
 
   return {

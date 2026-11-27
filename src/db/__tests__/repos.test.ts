@@ -69,4 +69,22 @@ describe('settingsRepo', () => {
     await repo.delete('units');
     expect(await repo.get('units')).toBeUndefined();
   });
+
+  it('counts the consecutive newest keyInvalid failures', async () => {
+    const repo = syncRunRepo(await createTestDb());
+    const fail = async (errorCode?: 'keyInvalid') => {
+      const run = await repo.start('schedule');
+      await repo.finish(run.id, errorCode ? { error: 'x', errorCode } : { error: 'other' });
+    };
+    await fail('keyInvalid');
+    await fail('keyInvalid');
+    expect((await repo.keyInvalidStreak()).count).toBe(2);
+    await fail();
+    // Intended: any other failure (network, 5xx) ends the streak and resets the backoff.
+    expect((await repo.keyInvalidStreak()).count).toBe(0);
+    const ok = await repo.start('manual');
+    await repo.finish(ok.id);
+    await fail('keyInvalid');
+    expect((await repo.keyInvalidStreak()).count).toBe(1);
+  });
 });

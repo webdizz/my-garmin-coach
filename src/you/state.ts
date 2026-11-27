@@ -21,6 +21,8 @@ export interface YouState {
   goal: { event: string; date: string; target: string | null } | null;
   slots: { id: string; weekday: number; start: string; end: string; kind: string }[];
   sync: { state: SyncStatus['state']; lastSuccessAt: string | null; nextPullAt: string };
+  /** True when Garmin rejected the key on the latest pulls (401), whatever the typed expiry date says. */
+  keyInvalid: boolean;
   garminKey: 'configured' | 'missing';
   /** Expiry of the Garmin key, from the date the user entered. `unknown` until it is set. */
   keyExpiry: KeyExpiry;
@@ -73,6 +75,7 @@ export async function getYouState(
       kind: s.kind,
     })),
     sync: { state: sync.state, lastSuccessAt: sync.lastSuccessAt, nextPullAt: sync.nextPullAt },
+    keyInvalid: sync.keyInvalid.count > 0,
     garminKey: opts.garminKey,
     keyExpiry: keyExpiry(expiresOn, today),
   };

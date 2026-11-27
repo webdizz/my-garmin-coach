@@ -3,6 +3,7 @@ import {
   createGarminClient,
   formatDay,
   GarminApiError,
+  GarminKeyInvalidError,
   guardedFetch,
   REQUEST_TIMEOUT_MS,
   resolveBaseUrl,
@@ -271,5 +272,19 @@ describe('host allowlist', () => {
     } finally {
       global.fetch = realFetch;
     }
+  });
+
+  it('classifies a 401 on the token exchange as a rejected key, not a generic error', async () => {
+    const { fetch } = fakeFetch({
+      [TOKEN_PATH]: () => new Response('', { status: 401 }),
+      '/weight-service': () => json({ dailyWeightSummaries: [] }),
+    });
+    const client = createGarminClient({ apiKey: 'k', fetch });
+    const err = await client
+      .weightRange(new Date(2026, 0, 1), new Date(2026, 0, 2))
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(GarminKeyInvalidError);
+    expect(err).toBeInstanceOf(GarminApiError);
+    expect((err as GarminApiError).status).toBe(401);
   });
 });

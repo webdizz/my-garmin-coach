@@ -22,6 +22,13 @@
       "when": 1795793072803,
       "tag": "0002_gc28_you_profile",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1795817803441,
+      "tag": "0003_gc36_sync_run_error_code",
+      "breakpoints": true
     }
   ]
 }

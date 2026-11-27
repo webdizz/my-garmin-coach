@@ -21,6 +21,21 @@ open the entry for the area you are touching.
 - `knip.json` ignores the `gitleaks` binary because it is a Homebrew binary, not an npm dependency
 - Enrollment token travels in a query string; exclude query strings from any access log (see GC-7)
 
+## GC-36 (key rejection): Notice a dead Garmin key from Garmin's 401
+
+**Added:**
+
+- `GarminKeyInvalidError` (`src/garmin/client.ts`): a 401 on the token exchange only. A 401 on a data call stays a plain `GarminApiError`.
+- `sync_run.errorCode` (`keyInvalid`), migration `0003_gc36_sync_run_error_code`. Nullable, so existing rows stay null.
+- A `keyInvalid` run stops at once (no retry), with a fixed message that never carries the key.
+- Scheduled pulls back off after consecutive rejections: `min(6h * 2^(n-1), 24h)` (`src/sync/key-backoff.ts`). Only slot fires are gated, not the startup catch-up. Manual pulls are not gated.
+- Today banner shows "Garmin rejected the key" while the streak is active. Clears after the next successful pull.
+
+**Gotchas:**
+
+- The gate is checked on slot fires only. A catch-up after a restart still runs once.
+- Manual refresh stays allowed while `keyInvalid`. The typed-date 409 (`keyExpired`) is unchanged.
+
 ## GC-36: Coverage floors and on-demand mutation testing
 
 **Added:** per-directory Jest coverage floors (`src/garmin`, `src/db`, `src/sync`, plus a global floor for the rest) set at the measured baseline, and Stryker 10 (`npm run mutation`, config in `stryker.config.mjs`) targeting the Garmin client and sync backoff/slots. `.graphifyignore` keeps health data and generated output out of the knowledge graph.

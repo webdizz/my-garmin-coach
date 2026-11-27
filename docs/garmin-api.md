@@ -29,6 +29,9 @@ Checked against live responses with the owner's key. Probe scripts: `scripts/pro
 - Token: `POST /personalapitoken-service/personal-api/personal-api-key/token` with
   `Authorization: ApiKey <key>`. Response body is the **raw JWT string** (not JSON). TTL 24 h.
 - Data calls: `Authorization: Bearer <jwt>`.
+- A **401 on the token exchange** means Garmin rejected the key (revoked or deleted). The app
+  stops the pull and records `errorCode: keyInvalid` (GC-36). Unverified against a real revoked key:
+  the 401-vs-403 choice is assumed, not confirmed.
 - JWT scopes: `CONNECT_READ`, `PERSONAL_API_FITNESS_READ`, `PERSONAL_API_NUTRITION_READ`,
   `PERSONAL_API_USER_READ`, `PERSONAL_API_WELLNESS_READ`.
 

@@ -29,4 +29,12 @@ describe('KeyBanner', () => {
     expect(alert).toHaveTextContent('Garmin key expired on 2030-03-09');
     expect(alert).toHaveTextContent('Data refresh is paused');
   });
+
+  it('shows the rejected key as an alert even when the typed date is still fine', () => {
+    render(<KeyBanner expiry={{ state: 'ok', expiresOn: '2030-06-01', daysLeft: 83 }} invalid />);
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('Garmin rejected the key');
+    expect(alert).toHaveTextContent('Data refresh is paused');
+    expect(alert).toHaveTextContent('then tap Sync');
+  });
 });

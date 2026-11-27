@@ -118,6 +118,7 @@ async function YouContent() {
             Garmin key{' '}
             {state.garminKey === 'configured' ? 'configured' : 'missing (set it on the server)'}
             {state.garminKey === 'configured' && `, ${keyExpiryLabel(state.keyExpiry)}`}
+            {state.keyInvalid && ' · rejected by Garmin, pulls backing off'}
           </p>
           <KeyExpiryForm
             current={state.keyExpiry.state === 'unknown' ? null : state.keyExpiry.expiresOn}

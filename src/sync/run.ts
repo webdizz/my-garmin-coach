@@ -2,7 +2,7 @@ import type { Db } from '../db/client';
 import { rawJsonRepo } from '../db/repos/raw-json';
 import { syncRunRepo } from '../db/repos/sync-run';
 import type { SyncRunRow } from '../db/schema';
-import { GarminApiError, type GarminClient } from '../garmin/client';
+import { GarminApiError, GarminKeyInvalidError, type GarminClient } from '../garmin/client';
 import { isRateLimited, withBackoff, type BackoffOptions } from './backoff';
 import { addDays, KIND_SPECS, type KindSpec, type PullContext } from './pull';
 
@@ -16,6 +16,8 @@ export const MAX_DAYS = 365;
 /** Range endpoints fail above ~400 days; 90 is verified (docs/garmin-api.md). */
 const CHUNK_DAYS = 90;
 const MAX_ERROR_LENGTH = 500;
+/** Fixed text: never the response body or anything that could carry the key. */
+const KEY_INVALID_MESSAGE = 'Garmin rejected the API key (401)';
 
 interface SyncOutcome {
   runId: string;
@@ -23,6 +25,8 @@ interface SyncOutcome {
   /** Number of day-payloads written (inserted or overwritten). */
   stored: number;
   error?: string;
+  /** Set when Garmin rejected the key, so the UI can say so and the scheduler can back off. */
+  errorCode?: 'keyInvalid';
 }
 
 export interface SyncServiceOptions {
@@ -82,13 +86,15 @@ export function createSyncService(options: SyncServiceOptions): SyncService {
     // Pull-level warnings (e.g. a truncated list) go into the run error so they are visible.
     const ctx: PullContext = { client, retry, warn: (message) => errors.push(message) };
     let stored = 0;
-    let rateLimited = false;
+    // A rate limit or a rejected key stops the run: retrying in the same run cannot succeed.
+    let stopRun = false;
+    let keyInvalid = false;
 
-    // Newest window first: recent days (the ones the UI shows) are stored first. A rate limit stops
-    // the run, so only the oldest days of the kind in progress are left for the next run.
+    // Newest window first: recent days (the ones the UI shows) are stored first. A stop leaves only
+    // the oldest days of the kind in progress for the next run.
     const newestFirst = [...spans].reverse();
     for (const spec of specs) {
-      if (rateLimited) break;
+      if (stopRun) break;
       for (const [i, [from, to]] of newestFirst.entries()) {
         if (spec.latestOnly && i > 0) continue;
         try {
@@ -97,19 +103,31 @@ export function createSyncService(options: SyncServiceOptions): SyncService {
             stored++;
           }
         } catch (err) {
-          errors.push(`${spec.kind}: ${describeError(err)}`);
-          rateLimited = isRateLimited(err);
+          if (err instanceof GarminKeyInvalidError) {
+            keyInvalid = true;
+            errors.push(KEY_INVALID_MESSAGE);
+          } else {
+            errors.push(`${spec.kind}: ${describeError(err)}`);
+          }
+          stopRun = keyInvalid || isRateLimited(err);
           break;
         }
       }
     }
 
     const error = errors.length ? errors.join('; ').slice(0, MAX_ERROR_LENGTH) : undefined;
-    await runs.finish(run.id, error === undefined ? {} : { error });
+    const errorCode = keyInvalid ? 'keyInvalid' : undefined;
+    await runs.finish(run.id, error === undefined ? {} : { error, errorCode });
     if (error === undefined)
       console.info(`[sync] run ${run.id} (${trigger}) success: ${stored} day-payloads stored`);
     else console.error(`[sync] run ${run.id} (${trigger}) error: ${error}`);
-    return { runId: run.id, status: error === undefined ? 'success' : 'error', stored, error };
+    return {
+      runId: run.id,
+      status: error === undefined ? 'success' : 'error',
+      stored,
+      error,
+      errorCode,
+    };
   }
 
   let inflight: Promise<SyncOutcome> | undefined;

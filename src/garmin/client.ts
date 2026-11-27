@@ -72,6 +72,18 @@ export class GarminApiError extends Error {
 }
 
 /**
+ * Garmin rejected the personal API key itself (401 on the token exchange). Retrying will not help:
+ * the user must create a new key. Only the token exchange throws this; a 401 on a data call stays
+ * a plain `GarminApiError`.
+ */
+export class GarminKeyInvalidError extends GarminApiError {
+  constructor(path: string) {
+    super(401, path);
+    this.name = 'GarminKeyInvalidError';
+  }
+}
+
+/**
  * Calendar days are `Date`s read in the caller's local time zone (Garmin `calendarDate` is the
  * user's local day), so build them with `new Date(2026, 0, 31)`, not from a UTC midnight string.
  * Only the year, month and day are used; the time of day is ignored.
@@ -142,6 +154,7 @@ export function createGarminClient(options: GarminClientOptions): GarminClient {
       method: 'POST',
       headers: { Authorization: `ApiKey ${options.apiKey}` },
     });
+    if (res.status === 401) throw new GarminKeyInvalidError(path);
     if (!res.ok) throw new GarminApiError(res.status, path);
     // Body is the raw JWT string, not JSON.
     const value = (await res.text()).trim();
