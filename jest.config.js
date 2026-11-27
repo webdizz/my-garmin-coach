@@ -25,4 +25,28 @@ const customJestConfig = {
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-export default createJestConfig(customJestConfig);
+const ESM_PACKAGES = [
+  'better-auth',
+  '@better-auth',
+  'better-call',
+  '@better-fetch',
+  'nanostores',
+  '@simplewebauthn',
+  '@noble',
+  '@peculiar',
+  'jose',
+  'rou3',
+  'kysely',
+];
+
+// next/jest ignores all of node_modules; let the ESM-only auth packages through the SWC transform.
+const buildConfig = async () => {
+  const config = await createJestConfig(customJestConfig)();
+  config.transformIgnorePatterns = [
+    `/node_modules/(?!(${ESM_PACKAGES.join('|')})/)`,
+    '^.+\\.module\\.(css|sass|scss)$',
+  ];
+  return config;
+};
+
+export default buildConfig;

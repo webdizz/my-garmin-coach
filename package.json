@@ -17,10 +17,14 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,css,json,md}\"",
     "verify": "npm run lint && npm run typecheck && npm run test:ci",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "auth:enroll": "tsx --env-file-if-exists=.env scripts/auth-enroll.ts"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.7.28",
+    "@better-auth/passkey": "^1.7.28",
     "@libsql/client": "^0.18.0",
+    "better-auth": "^1.7.28",
     "drizzle-orm": "^0.45.4",
     "next": "16.4.6",
     "react": "19.3.0",
@@ -45,6 +49,7 @@
     "lint-staged": "^17.6.2",
     "prettier": "^3.10.1",
     "tailwindcss": "4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   },
   "lint-staged": {
