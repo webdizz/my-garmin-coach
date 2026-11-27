@@ -112,24 +112,3 @@ To bypass hooks (not recommended):
 ```bash
 git commit --no-verify
 ```
-
-## Recent work
-
-### GC-8: Garmin client (token exchange and typed fetchers)
-
-- `src/garmin/`: server-only client for the Personal API. The API key is exchanged for a 24 h Bearer token, cached and re-requested on 401.
-- Typed fetchers take `Date` (local calendar day) and return promises: HRV, sleep, resting HR, HR zones, weight, body battery, stress, daily summary, fitness age, VO2max, activities.
-- Every request is limited to `https://personal.connectapi.garmin.com` over HTTPS. Errors carry status and path only.
-- 22 offline tests (stub fetch, synthetic data).
-
-### GC-6: Database Foundation (async SQLite + Drizzle)
-
-- Added `src/db/` module with async `@libsql/client` driver
-- Drizzle ORM schema (dialect-agnostic, migration path to Postgres)
-- Three base tables: `raw_json` (Garmin responses), `sync_run` (sync history), `settings` (typed key/value)
-- ULID monotonic IDs
-- Typed repository layer (rawJsonRepo, syncRunRepo, settingsRepo)
-- In-memory test helper (`createTestDb()`)
-- 6 synthetic-data tests
-- Dev server on port 3344
-- Drizzle migrations in `drizzle/` (generated via `npm run db:generate`)

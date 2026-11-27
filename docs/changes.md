@@ -3,6 +3,24 @@
 Per-ticket log of what landed, with gotchas. Newest first. Not required reading for every task:
 open the entry for the area you are touching.
 
+## GC-35: Refactoring according to linters
+
+**Added:**
+
+- ESLint guardrails in `eslint.config.mjs`: client boundary (no `src/garmin`, `src/db`, `src/auth` imports from `'use client'`), `GARMIN_*` env reads only in `src/garmin/index.ts`, no `console.*` of tokens or payloads
+- dependency-cruiser layer rules (`.dependency-cruiser.cjs`, `npm run arch`)
+- gitleaks secret scan (`.gitleaks.toml`), privacy guard (`scripts/guard-privacy.sh`) on pre-commit and pre-push, Dependabot config
+- knip unused-code gate, Drizzle drift check (`npm run db:check`), `format:check` and `next build` in the checks
+- `npm run verify` is the single definition of done; `docs/definition-of-done.md` is the solo checklist
+- `graphify-out/` excluded from git, Prettier, ESLint and knip
+
+**Gotchas:**
+
+- `test:ci` must pass `--coverage`, otherwise the coverage thresholds are not enforced
+- Mutation (Stryker) is not part of `verify`; run it with `npm run mutation`
+- `knip.json` ignores the `gitleaks` binary because it is a Homebrew binary, not an npm dependency
+- Enrollment token travels in a query string; exclude query strings from any access log (see GC-7)
+
 ## GC-36: Coverage floors and on-demand mutation testing
 
 **Added:** per-directory Jest coverage floors (`src/garmin`, `src/db`, `src/sync`, plus a global floor for the rest) set at the measured baseline, and Stryker 10 (`npm run mutation`, config in `stryker.config.mjs`) targeting the Garmin client and sync backoff/slots. `.graphifyignore` keeps health data and generated output out of the knowledge graph.
@@ -56,6 +74,7 @@ open the entry for the area you are touching.
 
 **Added:**
 
+- 22 offline tests (stub fetch, synthetic data)
 - `src/garmin/client.ts`: `createGarminClient()` with `GarminClient` methods for each verified endpoint
 - Token: `ApiKey` exchange → raw JWT, cached 24 h minus 10 min, one shared in-flight exchange, re-exchange once on 401
 - Dates are `Date` objects read as local calendar days (`formatDay()` → `YYYY-MM-DD`); methods are `async`
