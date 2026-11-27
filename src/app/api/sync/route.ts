@@ -44,8 +44,8 @@ export async function POST(request: Request) {
   }
   const service = await getSyncService();
   if (service.isRunning()) return Response.json(await status(), { status: 409 });
-  void service
-    .run('manual', { days })
-    .catch((err) => console.error('[sync] manual pull failed:', describeError(err)));
+  void service.run('manual', { days }).catch((err: unknown) => {
+    console.error('[sync] manual pull failed:', describeError(err));
+  });
   return Response.json(await status(), { status: 202 });
 }

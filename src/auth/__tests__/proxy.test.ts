@@ -6,7 +6,7 @@ jest.mock('server-only', () => ({}));
 jest.mock('../../db', () => ({ getDb: jest.fn() }));
 
 async function loadProxy() {
-  const { getDb } = jest.requireMock('../../db') as { getDb: jest.Mock };
+  const { getDb } = jest.requireMock<{ getDb: jest.Mock }>('../../db');
   getDb.mockResolvedValue(await createTestDb());
   return (await import('../../proxy')).proxy;
 }

@@ -23,7 +23,7 @@ export function LoginForm() {
     <>
       <button
         type="button"
-        onClick={unlock}
+        onClick={() => void unlock()}
         disabled={state === 'busy'}
         className="mt-6 w-full rounded-xl bg-[var(--color-accent)] p-3.5 text-[15px] font-semibold text-[#10160a] disabled:opacity-60"
       >

@@ -12,7 +12,7 @@ describe('requireSession', () => {
   });
 
   it('returns 401 without a session cookie', async () => {
-    const { getDb } = jest.requireMock('../../db') as { getDb: jest.Mock };
+    const { getDb } = jest.requireMock<{ getDb: jest.Mock }>('../../db');
     getDb.mockResolvedValue(await createTestDb());
     const { requireSession } = await import('../index');
     const denied = await requireSession(new Request('http://localhost:3344/api/sync'));
@@ -21,7 +21,7 @@ describe('requireSession', () => {
   });
 
   it('returns 401 for a forged session cookie', async () => {
-    const { getDb } = jest.requireMock('../../db') as { getDb: jest.Mock };
+    const { getDb } = jest.requireMock<{ getDb: jest.Mock }>('../../db');
     getDb.mockResolvedValue(await createTestDb());
     const { requireSession } = await import('../index');
     const denied = await requireSession(

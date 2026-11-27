@@ -3,12 +3,16 @@ import { decideAccess, isPublicPath } from '../gate';
 describe('gate', () => {
   it.each(['/login', '/enroll', '/api/auth/sign-in/passkey', '/api/auth/get-session'])(
     '%s is public',
-    (p) => expect(isPublicPath(p)).toBe(true)
+    (p) => {
+      expect(isPublicPath(p)).toBe(true);
+    }
   );
 
   it.each(['/', '/trends', '/api/sync', '/api/authx', '/login/extra', '/enroll/x'])(
     '%s is gated',
-    (p) => expect(isPublicPath(p)).toBe(false)
+    (p) => {
+      expect(isPublicPath(p)).toBe(false);
+    }
   );
 
   it('redirects unauthenticated pages to login', () => {

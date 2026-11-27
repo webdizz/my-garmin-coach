@@ -12,7 +12,7 @@ describe('/api/sync session guard', () => {
   });
 
   it('GET and POST return 401 without a session, before any sync work', async () => {
-    const { getDb } = jest.requireMock('@/db') as { getDb: jest.Mock };
+    const { getDb } = jest.requireMock<{ getDb: jest.Mock }>('@/db');
     getDb.mockResolvedValue(await createTestDb());
     const route = await import('../route');
     const req = () => new Request('http://localhost:3344/api/sync', { method: 'POST' });

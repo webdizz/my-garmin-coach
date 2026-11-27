@@ -21,7 +21,7 @@ const shared = globalThis as Record<symbol, Promise<Auth> | undefined>;
 export function getAuth(): Promise<Auth> {
   shared[KEY] ??= getDb()
     .then((db) => createAuth(db, readAuthEnv()))
-    .catch((err) => {
+    .catch((err: unknown) => {
       shared[KEY] = undefined;
       throw err;
     });

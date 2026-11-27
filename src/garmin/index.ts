@@ -7,6 +7,11 @@ export type * from './types';
 
 let client: GarminClient | undefined;
 
+/** True when GARMIN_CONNECT_API_KEY is set. The value itself is never returned. */
+export function hasGarminApiKey(): boolean {
+  return Boolean(process.env.GARMIN_CONNECT_API_KEY);
+}
+
 /**
  * Process-wide Garmin client, built from GARMIN_CONNECT_API_KEY on first use.
  * Server-only. Only the variable name appears here; the value is never logged.

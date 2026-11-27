@@ -35,10 +35,14 @@ export function LockControls() {
       }
     };
     arm();
-    ACTIVITY_EVENTS.forEach((e) => window.addEventListener(e, onActivity, { passive: true }));
+    ACTIVITY_EVENTS.forEach((e) => {
+      window.addEventListener(e, onActivity, { passive: true });
+    });
     return () => {
       clearTimeout(idleTimer.current);
-      ACTIVITY_EVENTS.forEach((e) => window.removeEventListener(e, onActivity));
+      ACTIVITY_EVENTS.forEach((e) => {
+        window.removeEventListener(e, onActivity);
+      });
     };
   }, [lock]);
 

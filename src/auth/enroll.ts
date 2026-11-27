@@ -16,7 +16,7 @@ export function enrollIdentifier(token: string): string {
 
 /** The single owner row. Created on first enrollment; the app never creates users any other way. */
 export async function ensureOwner(db: Db) {
-  const [existing] = await db.select().from(user).limit(1);
+  const existing = (await db.select().from(user).limit(1)).at(0);
   if (existing) return existing;
   const [created] = await db
     .insert(user)
@@ -26,8 +26,8 @@ export async function ensureOwner(db: Db) {
 }
 
 export async function findOwner(db: Db) {
-  const [owner] = await db.select().from(user).limit(1);
-  return owner;
+  const rows = await db.select().from(user).limit(1);
+  return rows.at(0);
 }
 
 /** Mint a one-time enrollment token. The plain token is returned once and never stored. */

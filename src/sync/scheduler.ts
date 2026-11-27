@@ -31,8 +31,16 @@ export function createScheduler(options: SchedulerOptions): Scheduler {
       handle.unref();
       return handle;
     });
-  const clearTimer = options.clearTimer ?? ((h) => clearTimeout(h as NodeJS.Timeout));
-  const log = options.log ?? ((m) => console.info(`[sync] ${m}`));
+  const clearTimer =
+    options.clearTimer ??
+    ((h) => {
+      clearTimeout(h as NodeJS.Timeout);
+    });
+  const log =
+    options.log ??
+    ((m) => {
+      console.info(`[sync] ${m}`);
+    });
   let timer: unknown;
   let stopped = true;
 

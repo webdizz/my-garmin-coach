@@ -5,7 +5,7 @@ export interface PullContext {
   /** Wraps every Garmin call with the retry/backoff policy. */
   retry: <T>(fn: () => Promise<T>) => Promise<T>;
   /** Record a non-fatal problem. It is kept in the run error, so the run shows as `error`. */
-  warn(message: string): void;
+  warn: (message: string) => void;
 }
 
 /** How one Garmin data kind is pulled: a map of local day (YYYY-MM-DD) to the verbatim payload for that day. */
@@ -133,7 +133,8 @@ export const KIND_SPECS: readonly KindSpec[] = [
           })
         );
         for (const a of items) {
-          const day = a.startTimeLocal?.slice(0, 10);
+          const day =
+            typeof a.startTimeLocal === 'string' ? a.startTimeLocal.slice(0, 10) : undefined;
           if (!day || !DAY.test(day)) continue;
           byDay.set(day, [...(byDay.get(day) ?? []), a]);
         }

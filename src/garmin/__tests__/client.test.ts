@@ -246,7 +246,7 @@ describe('host allowlist', () => {
   it('sends requests with redirect:error and a timeout signal', async () => {
     const realFetch = global.fetch;
     const spy = jest.fn().mockResolvedValue(new Response('ok'));
-    global.fetch = spy as unknown as typeof fetch;
+    global.fetch = spy;
     try {
       await guardedFetch(`${BASE}/x`, { headers: { a: 'b' } });
       const init = spy.mock.calls[0][1] as RequestInit;
@@ -261,7 +261,7 @@ describe('host allowlist', () => {
   it('default transport refuses foreign hosts before any network call', async () => {
     const realFetch = global.fetch;
     const spy = jest.fn();
-    global.fetch = spy as unknown as typeof fetch;
+    global.fetch = spy;
     try {
       await expect(guardedFetch('https://evil.example.com/x', {})).rejects.toThrow(/not allowed/);
       await expect(guardedFetch('http://personal.connectapi.garmin.com/x', {})).rejects.toThrow(

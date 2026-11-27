@@ -20,7 +20,7 @@ export function getSyncService(): Promise<SyncService> {
     const db = await getDb();
     await syncRunRepo(db).interruptRunning();
     return createSyncService({ db, client: getGarminClient() });
-  })().catch((err) => {
+  })().catch((err: unknown) => {
     shared.service = undefined;
     throw err;
   });
@@ -39,14 +39,18 @@ export async function startSyncScheduler(): Promise<void> {
         const out = await service.run('schedule');
         if (out === null) console.info('[sync] scheduled pull skipped: a pull is already running');
         else if (out.status === 'error')
-          console.error(`[sync] run ${out.runId} (schedule) error: ${out.error}`);
+          console.error(
+            `[sync] run ${out.runId} (schedule) error: ${out.error ?? 'unknown error'}`
+          );
         else
           console.info(
             `[sync] run ${out.runId} (schedule) success: ${out.stored} day-payloads stored`
           );
       },
       lastSuccessAt: async () => (await runs.lastSuccess())?.finishedAt ?? undefined,
-      onError: (err) => console.error('[sync] scheduled pull failed:', describeError(err)),
+      onError: (err) => {
+        console.error('[sync] scheduled pull failed:', describeError(err));
+      },
     }).start();
   } catch (err) {
     shared.started = false;

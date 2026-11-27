@@ -17,7 +17,7 @@ export function EnrollForm() {
     }
     setState('busy');
     const { error } = await authClient.passkey.addPasskey({
-      name: navigator.platform || 'This device',
+      name: 'This device',
       context: token,
       createSession: true,
     });
@@ -34,7 +34,7 @@ export function EnrollForm() {
     <>
       <button
         type="button"
-        onClick={enroll}
+        onClick={() => void enroll()}
         disabled={state === 'busy'}
         className="mt-6 w-full rounded-xl bg-[var(--color-accent)] p-3.5 text-[15px] font-semibold text-[#10160a] disabled:opacity-60"
       >

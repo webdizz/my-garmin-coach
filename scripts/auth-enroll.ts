@@ -27,7 +27,7 @@ async function main() {
   console.log(`  ${origin}/enroll#${token}\n`);
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   console.error('enroll failed:', err instanceof Error ? err.message : err);
   process.exit(1);
 });

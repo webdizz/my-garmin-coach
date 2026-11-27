@@ -13,7 +13,7 @@ export type SettingKey = keyof SettingsMap;
 export function settingsRepo(db: Db) {
   return {
     async get<K extends SettingKey>(key: K): Promise<SettingsMap[K] | undefined> {
-      const [row] = await db.select().from(settings).where(eq(settings.key, key));
+      const row = (await db.select().from(settings).where(eq(settings.key, key))).at(0);
       return row?.value as SettingsMap[K] | undefined;
     },
 
