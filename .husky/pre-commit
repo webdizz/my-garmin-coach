@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Pre-commit hook: lint, typecheck, and test
-# Runs lint-staged (linter), typecheck, and fast test suite
+# Pre-commit hook: secrets/privacy guard, lint, typecheck, and test
+# Runs gitleaks, privacy guard, lint-staged, typecheck, and fast test suite
 # Blocks commit if any check fails
 
 set -e
@@ -12,6 +12,19 @@ echo ""
 # Run lint-staged (ESLint on staged files only)
 echo "📝 Running ESLint on staged files..."
 npx lint-staged || true  # Allow passing even if no staged files
+echo ""
+
+# Secrets and privacy guard (fails closed if the tool is missing)
+echo "🔐 Scanning staged changes for secrets (gitleaks)..."
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "❌ gitleaks not installed. Install it: brew install gitleaks"
+  exit 1
+fi
+gitleaks git --pre-commit --staged --redact --no-banner -c .gitleaks.toml
+echo ""
+
+echo "🛡️  Checking privacy guard (no fixtures/CSV/.env, no Garmin payloads)..."
+scripts/guard-privacy.sh --staged
 echo ""
 
 # Run TypeScript type checking

@@ -2,7 +2,7 @@
 
 # Pre-push hook: validates that all tests and build process pass
 # Ensures changes are deployable by CI/CD pipeline
-# Runs: build, full test suite with coverage, typecheck, and lint
+# Runs: dependency audit, secrets scan, build, full test suite with coverage, typecheck, and lint
 
 set -e
 
@@ -13,6 +13,20 @@ echo ""
 # This matches what the CI/CD pipeline will run
 echo "🔍 Running full verification suite (this may take a minute)..."
 npm run verify
+echo ""
+
+# Dependency audit: block on high/critical production vulnerabilities
+echo "📦 Auditing production dependencies (npm audit --omit=dev)..."
+npm audit --omit=dev --audit-level=high
+echo ""
+
+# Secrets scan across the full git history
+echo "🔐 Scanning git history for secrets (gitleaks)..."
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "❌ gitleaks not installed. Install it: brew install gitleaks"
+  exit 1
+fi
+gitleaks git --redact --no-banner -c .gitleaks.toml
 echo ""
 
 # Explicitly build to catch any build-time errors

@@ -124,9 +124,11 @@ describe('auth config', () => {
 describe('login status', () => {
   it('reports key presence only, never the key', async () => {
     const db = await createTestDb();
-    const status = await getLoginStatus(db, { GARMIN_CONNECT_API_KEY: 'super-secret' });
+    // Runtime-built sentinel: no key-shaped literal in source.
+    const secret = ['sentinel', Date.now().toString(36)].join('-');
+    const status = await getLoginStatus(db, { GARMIN_CONNECT_API_KEY: secret });
     expect(status).toEqual({ garminKey: 'configured', lastSyncAt: null });
-    expect(JSON.stringify(status)).not.toContain('super-secret');
+    expect(JSON.stringify(status)).not.toContain(secret);
     expect((await getLoginStatus(db, {})).garminKey).toBe('missing');
   });
 

@@ -1,0 +1,30 @@
+# gitleaks configuration. Used by .husky/pre-commit, .husky/pre-push and scripts/ci-verify.sh.
+# Docs: https://github.com/gitleaks/gitleaks#configuration
+
+title = "GarminConnect gitleaks config"
+
+[extend]
+# Start from the upstream default rule set (AWS, GitHub, generic keys, private keys, ...).
+useDefault = true
+
+# Project-specific rule: the Garmin Personal API key, referenced by variable name only.
+[[rules]]
+id = "garmin-connect-api-key"
+description = "Garmin Connect personal API key assignment"
+regex = '''(?i)garmin[_-]?connect[_-]?api[_-]?key["']?\s*[:=]\s*["']?[A-Za-z0-9_\-\.]{12,}'''
+keywords = ["garmin_connect_api_key", "garmin-connect-api-key", "garminconnectapikey"]
+
+
+[allowlist]
+description = "Generated, vendored and lock output that is not authored source"
+paths = [
+  '''^\.next/''',
+  '''^node_modules/''',
+  '''^coverage/''',
+  '''^\.stryker-tmp/''',
+  '''^\.stryker-cache/''',
+  '''^graphify-out/''',
+  '''(^|/)package-lock\.json$''',
+  '''\.gitleaks\.toml$''',
+  '''^reports/''',
+]

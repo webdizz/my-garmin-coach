@@ -112,6 +112,24 @@ git commit --no-verify      # Skips ALL hooks
 
 Use only for emergency hotfixes. Hooks exist to maintain code quality.
 
+## 🔐 Secrets & Privacy Guards
+
+Health data and secrets must never enter git. Three layers enforce this:
+
+| Stage      | Check                                     | Blocks on                                                                                                               |
+| ---------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| pre-commit | `gitleaks git --pre-commit --staged`      | secrets in staged changes                                                                                               |
+| pre-commit | `scripts/guard-privacy.sh --staged`       | tracked `fixtures/`, `*.csv`, `.env`, `*.db`; Garmin-shaped payloads or Portuguese Garmin CSV headers in staged content |
+| pre-push   | `npm audit --omit=dev --audit-level=high` | high/critical production advisories                                                                                     |
+| pre-push   | `gitleaks git`                            | secrets anywhere in history                                                                                             |
+| CI         | `scripts/ci-verify.sh`                    | all of the above, plus full-history gitleaks                                                                            |
+
+- Install gitleaks once: `brew install gitleaks`. Hooks fail closed if it is missing.
+- **`.gitleaks.toml`** extends the default rules with a Garmin API key rule. Generated output (`.next/`, `reports/`, `graphify-out/`) is allowlisted. Test files are scanned like any other file; tests must build secret-shaped values at runtime rather than use literals.
+- **`scripts/guard-privacy.sh`** flags payloads with real values only. Schema placeholders such as `"calendarDate": "string"` pass.
+- If the guard flags a real file: `git rm --cached <path>` and keep it in `.gitignore`.
+- Moderate npm advisories are reported by `npm audit` but do not block pushes. Review them periodically.
+
 ## 🔧 Configuration Files
 
 - **`.husky/pre-commit`** — Hook script that runs on every commit
@@ -121,6 +139,9 @@ Use only for emergency hotfixes. Hooks exist to maintain code quality.
 - **`jest.config.js`** — Jest config (Next.js environment)
 - **`jest.setup.ts`** — Jest setup (testing library imports)
 - **`package.json` → `lint-staged`** — Runs linter + prettier on staged files
+- **`.gitleaks.toml`** — Secret scanning rules and allowlist
+- **`scripts/guard-privacy.sh`** — Fixture, CSV, `.env` and Garmin payload guard
+- **`.github/dependabot.yml`** — Weekly dependency update PRs (npm and GitHub Actions)
 
 ## 📦 Dependencies
 

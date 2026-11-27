@@ -1,0 +1,5 @@
+# Known historical findings (commits e250acd, 2494917). Test placeholders of 13 alnum chars,
+# not real keys. Rewriting published history is out of scope. Fingerprint format: file:rule:line.
+src/garmin/__tests__/index.test.ts:garmin-connect-api-key:18
+src/garmin/__tests__/index.test.ts:garmin-connect-api-key:31
+src/auth/__tests__/auth.test.ts:garmin-connect-api-key:127
