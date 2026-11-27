@@ -55,3 +55,5 @@ export const settings = sqliteTable('settings', {
 export type RawJsonRow = typeof rawJson.$inferSelect;
 export type SyncRunRow = typeof syncRun.$inferSelect;
 export type SettingRow = typeof settings.$inferSelect;
+
+export * from './auth-schema';
