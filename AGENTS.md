@@ -23,12 +23,33 @@ Read `docs/` before making decisions.
 - **UI:** deferred. Start with key capabilities first.
 - **Platform:** iPhone use via PWA. Native iOS (SwiftUI) was considered and deprioritised.
 
-## Working rules
+## Definition of done
+
+`npm run verify` is the one contract. It runs: format:check, lint, typecheck, test:ci (coverage thresholds),
+knip, arch (dependency-cruiser), db:check (Drizzle drift), secrets (gitleaks) and mutation (Stryker, break at 74%).
+Mutation is slow on purpose: it measures test quality, not just coverage.
+
+**Must pass before claiming done.** Run it and report the result. Do not claim done on a partial run.
+
+## Never do
+
+Each rule below is enforced by a tool. If the tool passes, the rule holds.
 
 - Do **not** read, print, copy or commit `.env` or any file containing the Garmin personal API key
-  or other secrets. Reference variables by name only.
-- Do **not** commit personal health exports (`~/Downloads/*.csv`) or any dump of real health data
-  into the repo. Use synthetic or anonymised fixtures for tests.
+  or other secrets. Reference variables by name only. Enforced by: `secrets` (gitleaks, `.gitleaks.toml`).
+- Do **not** commit personal health exports (`~/Downloads/*.csv`), `fixtures/`, `*.db`, or real health data
+  into the repo. Use synthetic or anonymised fixtures. Enforced by: `scripts/guard-privacy.sh` (pre-commit, pre-push).
+- Do **not** import `src/garmin`, `src/db` or `src/auth` from a `'use client'` module (except `@/auth/client`).
+  Enforced by: `no-restricted-syntax` in `eslint.config.mjs` (`CLIENT_IMPORT_RULES`).
+- Do **not** read `GARMIN_*` env vars outside `src/garmin/index.ts`. Enforced by: `no-restricted-syntax` in `eslint.config.mjs` (`GARMIN_ENV_RULES`).
+- Do **not** log tokens, payloads, secrets or cookies with `console.*`. Enforced by: `no-restricted-syntax` in `eslint.config.mjs` (`SECRET_LOG_RULES`).
+- Do **not** add a dependency cycle, or make `garmin`/`db` import from `app`, `sync` or `auth`, or make `sync` and `auth` import each other. Enforced by: `arch` (`.dependency-cruiser.cjs`).
+- Do **not** leave `.only`/`.skip` in tests or write assertion-free tests. Enforced by: `jest/no-focused-tests`, `jest/no-disabled-tests`, `jest/expect-expect` in `eslint.config.mjs`.
+- Do **not** edit `src/db/schema.ts` without a matching migration. Enforced by: `db:check` (`scripts/check-drizzle-drift.mjs`).
+- Do **not** use `--no-verify` to skip hooks.
+
+## Working rules
+
 - Garmin export CSVs are **Portuguese-localised** (headers like `Tempo`, `Peso`, `Braçada`).
   Parsers must handle localisation and the decimal/unit formats (e.g. `81.2 kg`, `6h 45m`, `--` for missing).
 - Verify any Garmin endpoint, field name or auth header against a real response before relying on it.
@@ -65,7 +86,7 @@ npm run test:pre-commit # Fast test run (used by pre-commit hooks)
 npm run lint            # Run ESLint on src/
 npm run format          # Auto-fix formatting with Prettier
 npm run format:check    # Check formatting without changing files
-npm run verify          # Full suite: lint + typecheck + test:ci
+npm run verify          # Definition of done: format:check, lint, typecheck, test:ci, knip, arch, db:check, secrets, mutation
 
 # Database
 npm run db:generate     # Generate Drizzle migrations

@@ -1,5 +1,6 @@
 {
   "entry": ["scripts/*.{ts,mjs}", "jest.stryker.config.mjs"],
   "project": ["src/**/*.{ts,tsx}", "scripts/**/*.{ts,mjs}", "*.{ts,mjs,cjs,js}"],
-  "ignoreDependencies": ["tailwindcss"]
+  "ignoreDependencies": ["tailwindcss"],
+  "ignoreBinaries": ["gitleaks"]
 }
