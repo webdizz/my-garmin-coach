@@ -9,7 +9,9 @@ export function EnrollForm() {
   const [state, setState] = useState<'idle' | 'busy' | 'error'>('idle');
 
   async function enroll() {
-    // The token lives in the URL fragment so it is never sent to the server or written to access logs.
+    // The token lives in the URL fragment, which the browser does not send in the page request.
+    // The passkey client then sends it as a `context` query parameter, so it does reach the server
+    // and can appear in access logs (see docs/auth-setup.md).
     const token = window.location.hash.slice(1);
     if (!token) {
       setState('error');
