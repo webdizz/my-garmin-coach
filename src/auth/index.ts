@@ -2,9 +2,9 @@ import 'server-only';
 import { getDb } from '../db';
 import { createAuth, type Auth } from './config';
 
-export const DEFAULT_ORIGIN = 'http://localhost:3344';
+const DEFAULT_ORIGIN = 'http://localhost:3344';
 
-export function readAuthEnv(env: NodeJS.ProcessEnv = process.env) {
+function readAuthEnv(env: NodeJS.ProcessEnv = process.env) {
   const secret = env.BETTER_AUTH_SECRET;
   if (!secret || secret.length < 32) {
     throw new Error(

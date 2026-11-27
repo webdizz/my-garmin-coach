@@ -1,5 +1,5 @@
 /** Pull slots in UTC: 09:30, 18:00 and 23:30 every day. */
-export const SYNC_SLOTS: readonly { hour: number; minute: number }[] = [
+const SYNC_SLOTS: readonly { hour: number; minute: number }[] = [
   { hour: 9, minute: 30 },
   { hour: 18, minute: 0 },
   { hour: 23, minute: 30 },

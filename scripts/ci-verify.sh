@@ -20,8 +20,20 @@ echo "🔧 Running TypeScript type check..."
 npm run typecheck
 
 echo ""
+echo "🧹 Checking for unused files, exports and dependencies (knip)..."
+npm run knip
+
+echo ""
+echo "🗄️  Checking for schema drift (db:generate must produce nothing)..."
+npm run db:check
+
+echo ""
 echo "✅ Running tests with coverage..."
 npm run test:ci
+
+echo ""
+echo "🏗️  Building production bundle (catches App Router server/client boundary errors)..."
+npm run build
 
 echo ""
 echo "🔐 Scanning for secrets (gitleaks, full git history)..."

@@ -4,14 +4,14 @@
  */
 
 /** `GET /hrv-service/hrv/{date}` and each element of `/hrv-service/hrv/daily/{from}/{to}`. */
-export interface HrvBaseline {
+interface HrvBaseline {
   lowUpper: number;
   balancedLow: number;
   balancedUpper: number;
   markerValue: number;
 }
 
-export interface HrvSummary {
+interface HrvSummary {
   calendarDate: string;
   weeklyAvg: number;
   lastNightAvg: number;

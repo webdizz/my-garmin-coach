@@ -13,7 +13,7 @@ import type {
   WeightRange,
 } from './types';
 
-export const DEFAULT_BASE_URL = 'https://personal.connectapi.garmin.com';
+const DEFAULT_BASE_URL = 'https://personal.connectapi.garmin.com';
 
 /** Garmin's token is valid 24 h. Re-request a little early so no call starts with a dying token. */
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;

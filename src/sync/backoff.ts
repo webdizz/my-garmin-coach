@@ -16,7 +16,7 @@ export function isRateLimited(err: unknown): boolean {
 }
 
 /** Rate limits, server errors and request timeouts are worth another try. Other 4xx are not. */
-export function isRetryable(err: unknown): boolean {
+function isRetryable(err: unknown): boolean {
   if (err instanceof GarminApiError) return err.status === 429 || err.status >= 500;
   return err instanceof Error && err.name === 'TimeoutError';
 }

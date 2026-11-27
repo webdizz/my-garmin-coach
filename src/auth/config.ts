@@ -15,7 +15,7 @@ const SESSION_REFRESH_SECONDS = 30;
  * Passkey endpoints are public (no session yet). Cap them per client so a token cannot be
  * brute-forced and sign-in cannot be hammered. Single-user app, so the limit is generous.
  */
-export const PASSKEY_RATE_LIMIT = { window: 60, max: 20 } as const;
+const PASSKEY_RATE_LIMIT = { window: 60, max: 20 } as const;
 
 export interface AuthOptions {
   /** At least 32 random characters. */

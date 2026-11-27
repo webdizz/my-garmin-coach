@@ -2,7 +2,6 @@ import 'server-only';
 import { createGarminClient, type GarminClient } from './client';
 
 export type { GarminClient } from './client';
-export { GarminApiError } from './client';
 export type * from './types';
 
 let client: GarminClient | undefined;

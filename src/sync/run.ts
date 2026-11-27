@@ -6,9 +6,9 @@ import { GarminApiError, type GarminClient } from '../garmin/client';
 import { isRateLimited, withBackoff, type BackoffOptions } from './backoff';
 import { addDays, KIND_SPECS, type KindSpec, type PullContext } from './pull';
 
-export type SyncTrigger = SyncRunRow['trigger'];
+type SyncTrigger = SyncRunRow['trigger'];
 
-export const SYNC_SOURCE = 'garmin';
+const SYNC_SOURCE = 'garmin';
 /** Recent days are re-pulled because Garmin revises them (sleep scores, HRV) after the fact. */
 export const DEFAULT_DAYS = 3;
 /** Garmin keeps about a year of history. */
@@ -17,7 +17,7 @@ export const MAX_DAYS = 365;
 const CHUNK_DAYS = 90;
 const MAX_ERROR_LENGTH = 500;
 
-export interface SyncOutcome {
+interface SyncOutcome {
   runId: string;
   status: 'success' | 'error';
   /** Number of day-payloads written (inserted or overwritten). */

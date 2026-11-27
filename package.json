@@ -17,10 +17,12 @@
     "prepare": "husky",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,css,json,md}\"",
-    "verify": "npm run lint && npm run typecheck && npm run arch && npm run test:ci && npm run mutation",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run knip && npm run arch && npm run db:check && npm run test:ci && npm run mutation",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "auth:enroll": "tsx --env-file-if-exists=.env scripts/auth-enroll.ts"
+    "auth:enroll": "tsx --env-file-if-exists=.env scripts/auth-enroll.ts",
+    "knip": "knip",
+    "db:check": "node scripts/check-drizzle-drift.mjs"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.7.28",
@@ -54,6 +56,7 @@
     "husky": "^9.1.7",
     "jest": "^30.5.2",
     "jest-environment-jsdom": "^30.5.2",
+    "knip": "^6.48.0",
     "lint-staged": "^17.6.2",
     "prettier": "^3.10.1",
     "tailwindcss": "4.3.3",
